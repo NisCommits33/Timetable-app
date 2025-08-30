@@ -34,12 +34,25 @@ const initialTasks  = [
 function App() {
   // initolazing state with tasks
   const [tasks, setTasks] = useState(initialTasks)
+  const [selectedDay, setselectedDay] = useState(null)
+
+   // callback function to handle the click event
+    const handleDayClick = (clickedDay) =>{
+        console.log("you clicked on:," ,clickedDay)
+        setselectedDay(clickedDay)
+
+
+    //state for day selected
+       
+        
+        
+    };
 
   return (
     <>
       <div className="app">
         <h1>My Timetable</h1>
-        <WeekView tasks={tasks}/>
+        <WeekView tasks={tasks} onDayClick = {handleDayClick} selectedDay={selectedDay}/>
         
       </div>
     </>

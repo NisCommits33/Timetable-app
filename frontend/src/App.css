@@ -4,6 +4,15 @@
   padding: 2rem;
   text-align: center;
 }
+/* css for week view */
+.selected{
+ color: red;
+}
+.days{
+  
+  border: 2px solid blue;
+  cursor: pointer;
+}
 
 .logo {
   height: 6em;
