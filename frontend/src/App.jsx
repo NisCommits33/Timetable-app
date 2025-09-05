@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import WeekView from './components/WeekView'
+import AddTaskForm from './components/AddTaskForm'
 
 // defining initial data
 const initialTasks  = [
@@ -26,7 +27,23 @@ const initialTasks  = [
   startTime:"8:00",
   endTime:"9:00",
   date: "2025/08/28",
-  day:"tuesday"
+  day:"Tuesday"
+  },
+  {
+  id:4,
+  title: "Read",
+  startTime:"8:00",
+  endTime:"9:00",
+  date: "2025/08/28",
+  day:"Wednesday"
+  },
+  {
+  id:3,
+  title: "Read",
+  startTime:"8:00",
+  endTime:"9:00",
+  date: "2025/08/28",
+  day:"Tuesday"
   }
 
 ]
@@ -52,8 +69,8 @@ function App() {
     <>
       <div className="app">
         <h1>My Timetable</h1>
+        <AddTaskForm/>
         <WeekView tasks={tasks} onDayClick = {handleDayClick} selectedDay={selectedDay}/>
-        
       </div>
     </>
   )

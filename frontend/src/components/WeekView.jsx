@@ -1,4 +1,5 @@
 import '../App.css'
+import TaskItem from "./TaskItem"
 
 export default function WeekView({tasks, onDayClick,selectedDay}){
     console.log("taks received in WeekView",tasks);
@@ -22,9 +23,13 @@ export default function WeekView({tasks, onDayClick,selectedDay}){
                     return(
                         <div className={daysName ===selectedDay ? 'selected' : ''} /*targeting css with if statement "selected is classname"*/ key = {daysName}>
                             <h3 className="days"onClick={() => onDayClick(daysName)} >
-                    
-                                {daysName} ({tasksForToday.length })
+                                {daysName}({tasksForToday.length })
                             </h3>
+                           <div className="task-list">
+                            {tasksForToday.map(task => (
+                                <TaskItem key={task.id} task={task} />
+                            ))}
+                            </div>
                         </div>
                     )
                 })}
