@@ -12,6 +12,7 @@ function AddTaskForm({ onAddTask }) {
   // 4. Change state to hold a Date object instead of a string
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [priority, setPriority] = useState('High');
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -32,6 +33,8 @@ function AddTaskForm({ onAddTask }) {
 
     console.log('New Task to Add:', newTask); // Let's check it before we send
     // onAddTask(newTask); // We'll uncomment this in the next step
+    onAddTask(newTask);
+    alert('task has been added')
 
     // 8. Reset the form (optional)
     setTitle('');
@@ -60,7 +63,7 @@ return (
 
       {/* Date Picker */}
       <label className="block">
-        <span className="text-gray-700 text-sm">Date*</span>
+        {/* <span className="text-gray-700 text-sm">Date*</span> */}
         <DatePicker
           selected={selectedDate}
           onChange={(date) => setSelectedDate(date)}

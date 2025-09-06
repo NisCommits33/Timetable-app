@@ -51,26 +51,38 @@ const initialTasks  = [
 function App() {
   // initolazing state with tasks
   const [tasks, setTasks] = useState(initialTasks)
-  const [selectedDay, setselectedDay] = useState(null)
+  const [selectedDay, setselectedDay] = useState(null) //state for day selected
 
    // callback function to handle the click event
     const handleDayClick = (clickedDay) =>{
         console.log("you clicked on:," ,clickedDay)
-        setselectedDay(clickedDay)
-
-
-    //state for day selected
-       
-        
-        
+        setselectedDay(clickedDay) 
     };
+
+  const addTask = (newTask) => {
+
+    setTasks(prevTasks => [...prevTasks, newTask]);
+
+  }
+  //delete task
+  const deleteTask = (taskIdToDelete) =>{
+    console.log("deleteTask function called with ID:" ,taskIdToDelete);
+  
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskIdToDelete));
+
+  }
 
   return (
     <>
       <div className="app">
         <h1>My Timetable</h1>
-        <AddTaskForm/>
-        <WeekView tasks={tasks} onDayClick = {handleDayClick} selectedDay={selectedDay}/>
+        <AddTaskForm onAddTask={addTask} />
+        <WeekView 
+        tasks={tasks}
+         onDayClick = {handleDayClick} 
+         selectedDay={selectedDay}
+         onDeleteTask={deleteTask}
+         />
       </div>
     </>
   )
