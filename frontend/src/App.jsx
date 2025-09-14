@@ -1,5 +1,5 @@
 // App.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   AppBar, 
   Toolbar, 
@@ -45,17 +45,66 @@ const initialTasks = [
 ];
 
 function App() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState(() => {
+    try {
+      const savedTasks = localStorage.getItem('timetable-tasks');
+      return savedTasks ? JSON.parse(savedTasks) : initialTasks;
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+      return initialTasks;
+    }
+  });
   const [selectedDay, setSelectedDay] = useState(null);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('timetable-tasks', JSON.stringify(tasks));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  }, [tasks]); // This runs every time 'tasks' changes
+
+// In App.jsx - Add this function after your state declarations
+const validateTaskTime = (newTask, editingId = null) => {
+  return !tasks.some(task => {
+    // Skip the task we're currently editing (if any)
+    if (task.id === editingId) return false;
+    
+    // Only check tasks on the same day
+    if (task.day !== newTask.day) return false;
+    
+    // Convert times to minutes for easier comparison
+    const toMinutes = (timeStr) => {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+    
+    const newStart = toMinutes(newTask.startTime);
+    const newEnd = toMinutes(newTask.endTime);
+    const existingStart = toMinutes(task.startTime);
+    const existingEnd = toMinutes(task.endTime);
+    
+    // Check for overlap: new task overlaps with existing task
+    return (newStart < existingEnd && newEnd > existingStart);
+  });
+};
+//handling clicked day
   const handleDayClick = (clickedDay) => {
     setSelectedDay(clickedDay);
   };
-
-  const addTask = (newTask) => {
-    setTasks(prevTasks => [...prevTasks, newTask]);
-  };
-
+//handling add task
+  // In App.jsx - Update your addTask function
+const addTask = (newTask) => {
+  // Validate for time conflicts
+  if (!validateTaskTime(newTask)) {
+    alert('⏰ Time conflict! This time slot overlaps with an existing task. Please choose a different time.');
+    return; // Don't add the task if there's a conflict
+  }
+  
+  // If no conflict, add the task normally
+  setTasks(prevTasks => [...prevTasks, newTask]);
+};
+//handling delete task
   const deleteTask = (taskIdToDelete) => {
     setTasks(prevTasks => prevTasks.filter(task => task.id !== taskIdToDelete));
   };
