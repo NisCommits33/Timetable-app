@@ -12,7 +12,7 @@ import TaskItem from './TaskItem'
  * @param {Function} props.onDeleteTask - Callback to delete a task
  * @param {Function} props.onEditTask - Callback to edit a task (NEW)
  */
-export default function WeekView({ tasks, onDayClick, selectedDay, onDeleteTask, onEditTask }) {
+export default function WeekView({ tasks, onDayClick, selectedDay, onDeleteTask, onEditTask,onViewDetails }) {
   // Array of days to display in the weekly view
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -71,6 +71,8 @@ export default function WeekView({ tasks, onDayClick, selectedDay, onDeleteTask,
                     task={task} 
                     onDelete={onDeleteTask}
                     onEdit={onEditTask} /* ← Pass edit callback */
+                    onViewDetails={onViewDetails}
+
                   />
                 ))
               ) : (

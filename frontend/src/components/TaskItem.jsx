@@ -1,7 +1,7 @@
 // components/TaskItem.jsx
 import { useState } from 'react'; // ← MUST ADD THIS IMPORT
-import { Paper, Typography, IconButton, Box } from '@mui/material';
-import { Delete, Schedule, Edit } from '@mui/icons-material';
+import { Paper, Typography, IconButton, Box} from '@mui/material';
+import { Delete, Schedule, Edit,Visibility  } from '@mui/icons-material';
 
 /**
  * TaskItem Component - Displays an individual task with actions
@@ -9,10 +9,13 @@ import { Delete, Schedule, Edit } from '@mui/icons-material';
  * @param {Object} props.task - The task object to display
  * @param {Function} props.onDelete - Callback to delete this task
  * @param {Function} props.onEdit - Callback to edit this task (NEW)
+ * @param {Function} props.onViewDetails - Callback to view task details
  */
-function TaskItem({ task, onDelete, onEdit }) {
+function TaskItem({ task, onDelete, onEdit, onViewDetails }) {
   const [showActions, setShowActions] = useState(false);
-
+   const handleCardClick = () => {
+    onViewDetails(task); // NEW: Open detail view instead of edit
+  };
   return (
     <Paper 
       elevation={0}
@@ -20,7 +23,7 @@ function TaskItem({ task, onDelete, onEdit }) {
                  lg:p-3" // ← More padding on large screens
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
-      onClick={() => onEdit(task)}
+      onClick={() => onViewDetails(task)}
     >
       <Box className="flex items-center justify-between">
         <Box className="flex-1 min-w-0">
@@ -61,6 +64,14 @@ function TaskItem({ task, onDelete, onEdit }) {
             >
               <Delete className="h-3 w-3 lg:h-4 lg:w-4" />
             </IconButton>
+            <IconButton
+        size="small"
+        onClick={(e) => { e.stopPropagation(); onViewDetails(task); }}
+        className="text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+        title="View details"
+      >
+        <Visibility className="h-3 w-3" />
+      </IconButton>
           </Box>
         )}
       </Box>
