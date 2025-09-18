@@ -32,36 +32,46 @@ const initialTasks = [
     startTime: "7:00",
     endTime: "7:30",
     date: "2025/08/28",
-    day: "Monday"
-  },
-  {
-    id: 2,
-    title: "Morning Walk",
-    startTime: "7:30",
-    endTime: "8:00",
-    date: "2025/08/28",
-    day: "Monday"
-  },
-  {
-    id: 3,
-    title: "Reading Time",
-    startTime: "8:00",
-    endTime: "9:00",
-    date: "2025/08/28",
-    day: "Tuesday"
+    day: "Monday",
+    priority: "High",
+
+
   }
 ];
 function App() {
   // State for tasks loaded from localStorage or initial data
-  const [tasks, setTasks] = useState(() => {
+ // Custom hook for robust localStorage management with error handling
+const useLocalStorage = (key, initialValue) => {
+  const [value, setValue] = useState(() => {
     try {
-      const savedTasks = localStorage.getItem('timetable-tasks');
-      return savedTasks ? JSON.parse(savedTasks) : initialTasks;
+      // Attempt to retrieve item from localStorage
+      const storedValue = localStorage.getItem(key);
+      // Parse JSON data, fallback to initialValue if null or parsing fails
+      return storedValue ? JSON.parse(storedValue) : initialValue;
     } catch (error) {
-      console.error('Error loading from localStorage:', error);
-      return initialTasks;
+      // Log error but don't crash the app - return initial value instead
+      console.error(`Error loading ${key} from localStorage:`, error);
+      return initialValue;
     }
   });
+
+  // Effect to persist data to localStorage whenever value changes
+  useEffect(() => {
+    try {
+      // Stringify and store the value
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      // Handle errors like quota exceeded or storage disabled
+      console.error(`Error saving ${key} to localStorage:`, error);
+    }
+  }, [key, value]); // Re-run when key or value changes
+
+  // Return state and setter just like useState
+  return [value, setValue];
+};
+
+// Usage in component
+const [tasks, setTasks] = useLocalStorage('timetable-tasks', initialTasks);
   
   // State to track which day is selected in the week view
   const [selectedDay, setSelectedDay] = useState(null);
