@@ -220,7 +220,27 @@ function App() {
       console.error("Error saving to localStorage:", error);
     }
   }, [tasks]); // Dependency array: runs when 'tasks' changes
+const handleTaskMove = ({ task, targetDay }) => {
+  if (!targetDay || targetDay === task.day) return;
 
+  // Create updated task with new day
+  const updatedTask = {
+    ...task,
+    day: targetDay,
+    updatedAt: new Date().toISOString()
+  };
+
+  // Validate time conflict for new position
+  if (!validateTaskTime(updatedTask, task.id)) {
+    alert('⏰ Time conflict! Cannot move task to this time slot.');
+    return;
+  }
+
+  // Update tasks state
+  setTasks(prevTasks => 
+    prevTasks.map(t => t.id === task.id ? updatedTask : t)
+  );
+};
   return (
     <div className={`min-h-screen transition-colors duration-200 ${
       isDarkMode 
@@ -271,7 +291,7 @@ function App() {
           
           {/* Sidebar - Add Task Form */}
           <div className="lg:col-span-1">
-            <div className={`p-6 rounded-xl border transition-colors duration-200 sticky top-6 ${
+            <div className={`p-5 rounded-xl border transition-colors duration-200 sticky top-1 ${
               isDarkMode 
                 ? 'border-gray-700 bg-gray-800' 
                 : 'border-gray-200 bg-white'
@@ -302,14 +322,15 @@ function App() {
               </div>
               
               <WeekView 
-                tasks={tasks} 
-                onDayClick={handleDayClick} 
-                selectedDay={selectedDay}
-                onDeleteTask={deleteTask}
-                onEditTask={handleEditTask}
-                onViewDetails={handleViewDetails}
-                isDarkMode={isDarkMode}
-              />
+  tasks={tasks}
+  onDayClick={handleDayClick}
+  selectedDay={selectedDay}
+  onDeleteTask={deleteTask}
+  onEditTask={handleEditTask}
+  onViewDetails={handleViewDetails}
+  onTaskMove={handleTaskMove}  // NEW
+  isDarkMode={isDarkMode}
+/>
             </div>
           </div>
         </div>
