@@ -1,13 +1,22 @@
 // components/SortableTaskItem.jsx
-import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import TaskItem from './TaskItem';
+import React from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import TaskItem from "./TaskItem";
 
 /**
  * Sortable version of TaskItem with drag handles
  */
-export function SortableTaskItem({ task, onDelete, onEdit, onViewDetails, isDarkMode }) {
+export function SortableTaskItem({
+  task,
+  onDelete,
+  onEdit,
+  onViewDetails,
+  isDarkMode,
+  onToggleTracking,
+  onAddManualTime,
+  onResetTracking,
+}) {
   const {
     attributes,
     listeners,
@@ -18,7 +27,7 @@ export function SortableTaskItem({ task, onDelete, onEdit, onViewDetails, isDark
   } = useSortable({
     id: task.id,
     data: {
-      type: 'task',
+      type: "task",
       task,
       day: task.day,
     },
@@ -37,7 +46,7 @@ export function SortableTaskItem({ task, onDelete, onEdit, onViewDetails, isDark
       {...attributes}
       {...listeners}
       className={`cursor-grab active:cursor-grabbing ${
-        isDragging ? 'z-50' : ''
+        isDragging ? "z-50" : ""
       }`}
     >
       <TaskItem
@@ -46,6 +55,9 @@ export function SortableTaskItem({ task, onDelete, onEdit, onViewDetails, isDark
         onEdit={onEdit}
         onViewDetails={onViewDetails}
         isDarkMode={isDarkMode}
+        onToggleTracking={onToggleTracking}
+        onAddManualTime={onAddManualTime}
+        onResetTracking={onResetTracking}
       />
     </div>
   );
