@@ -44,7 +44,10 @@ export default function WeekView({
   onEditTask, 
   onViewDetails,
   onTaskMove,
-  isDarkMode 
+  isDarkMode,
+  onToggleTracking,
+  onAddManualTime,
+  onResetTracking 
 }) {
   // Array of days to display in the weekly view
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -164,6 +167,11 @@ export default function WeekView({
                         onEdit={onEditTask}
                         onViewDetails={onViewDetails}
                         isDarkMode={isDarkMode}
+                        onToggleTracking={onToggleTracking}
+                        onAddManualTime={onAddManualTime}
+                        onResetTracking={onResetTracking}
+
+                        
                       />
                     ))
                   ) : (
