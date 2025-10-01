@@ -5,6 +5,8 @@ import AddTaskForm from "./components/AddTaskForm";
 import WeekView from "./components/WeekView";
 import TaskDetailModal from "./components/TaskDetailModal";
 import { useTimeTracking } from "./hooks/useTimeTracking";
+import {NotificationProvider} from './contexts/NotificationContext';
+import NotificationCenter from "./components/NotificationCenter";
 
 // ... your initialTasks array remains the same ...
 // In App.jsx - Update your initialTasks array
@@ -402,54 +404,55 @@ function App() {
 })));
   return (
     
-    <div
     
-      className={`min-h-screen transition-colors duration-200 ${
+    <NotificationProvider tasks={tasks}>
+      <div className={`min-h-screen transition-colors duration-200 ${
         isDarkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"
-      }`}
-    >
-      {/* Header Section */}
-      <header
-        className={`border-b transition-colors duration-200 ${
+      }`}>
+        
+        {/* Header Section - Add NotificationCenter */}
+        <header className={`border-b transition-colors duration-200 ${
           isDarkMode
             ? "border-gray-700 bg-gray-800"
             : "border-gray-200 bg-white"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo and App Name */}
-            <div className="flex items-center space-x-3">
-              <Calendar className="h-7 w-7 text-blue-600" />
-              <h1 className="text-xl font-semibold">Timetable App</h1>
-            </div>
+        }`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              {/* Logo and App Name */}
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-7 w-7 text-blue-600" />
+                <h1 className="text-xl font-semibold">Timetable App</h1>
+              </div>
 
-            {/* Right Side Actions */}
-            <div className="flex items-center space-x-4">
-              {/* Dark Mode Toggle */}
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700"
-                aria-label="Toggle dark mode"
-              >
-                {isDarkMode ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </button>
+              {/* Right Side Actions */}
+              <div className="flex items-center space-x-4">
+                {/* Notification Center */}
+                <NotificationCenter isDarkMode={isDarkMode} />
+                
+                {/* Dark Mode Toggle */}
+                <button
+                  onClick={toggleDarkMode}
+                  className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  aria-label="Toggle dark mode"
+                >
+                  {isDarkMode ? (
+                    <Sun className="h-5 w-5" />
+                  ) : (
+                    <Moon className="h-5 w-5" />
+                  )}
+                </button>
 
-              {/* New Task Button */}
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200">
-                <Plus className="h-4 w-4" />
-                <span>New Task</span>
-              </button>
+                {/* New Task Button */}
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200">
+                  <Plus className="h-4 w-4" />
+                  <span>New Task</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content Area */}
+        {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar - Add Task Form */}
@@ -670,7 +673,8 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </NotificationProvider>
   );
 }
 
