@@ -1,17 +1,10 @@
-// hooks/useTimeTracking.js
+// useTimeTracking.js - Remove notification integration for now
 import { useState, useEffect, useCallback } from 'react';
+// REMOVE: import { useNotifications } from '../contexts/NotificationContext';
 
-/**
- * Custom hook for managing time tracking functionality
- * @param {Array} tasks - Array of tasks
- * @param {Function} setTasks - State setter for tasks
- */
 export function useTimeTracking(tasks, setTasks) {
   const [activeTimer, setActiveTimer] = useState(null);
 
-  /**
-   * Starts time tracking for a task
-   */
   const startTracking = useCallback((taskId) => {
     setTasks(prevTasks => 
       prevTasks.map(task => {
@@ -53,9 +46,6 @@ export function useTimeTracking(tasks, setTasks) {
     setActiveTimer(taskId);
   }, [setTasks]);
 
-  /**
-   * Stops time tracking for a task
-   */
   const stopTracking = useCallback((taskId) => {
     setTasks(prevTasks => 
       prevTasks.map(task => {
@@ -79,7 +69,7 @@ export function useTimeTracking(tasks, setTasks) {
                 }
               ]
             },
-            actualDuration: newTotalTime
+            actualDuration: Math.floor(newTotalTime / 1000)
           };
         }
         return task;
@@ -89,9 +79,6 @@ export function useTimeTracking(tasks, setTasks) {
     setActiveTimer(null);
   }, [setTasks]);
 
-  /**
-   * Toggles time tracking (start/stop)
-   */
   const toggleTracking = useCallback((taskId) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
@@ -103,53 +90,36 @@ export function useTimeTracking(tasks, setTasks) {
     }
   }, [tasks, startTracking, stopTracking]);
 
-  /**
-   * Manually adds time to a task
-   */
-  // In useTimeTracking.js - add debug to addManualTime
-// In useTimeTracking.js - update addManualTime with better debugging
-const addManualTime = useCallback((taskId, minutes) => {
-  console.log('🕒 addManualTime called:', { taskId, minutes });
-  
-  // Convert minutes to milliseconds
-  const milliseconds = minutes * 60 * 1000;
-  
-  setTasks(prevTasks => 
-    prevTasks.map(task => {
-      if (task.id === taskId) {
-        const newTotalTime = task.timeTracking.totalTimeSpent + milliseconds;
-        console.log('🕒 Task updated:', {
-          taskId,
-          oldTime: task.timeTracking.totalTimeSpent,
-          added: milliseconds,
-          newTime: newTotalTime
-        });
-        
-        return {
-          ...task,
-          timeTracking: {
-            ...task.timeTracking,
-            totalTimeSpent: newTotalTime,
-            sessions: [
-              ...task.timeTracking.sessions,
-              {
-                start: Date.now() - milliseconds,
-                end: Date.now(),
-                duration: milliseconds,
-                manual: true
-              }
-            ]
-          }
-        };
-      }
-      return task;
-    })
-  );
-}, [setTasks]);
+  const addManualTime = useCallback((taskId, minutes) => {
+    const milliseconds = minutes * 60 * 1000;
+    setTasks(prevTasks => 
+      prevTasks.map(task => {
+        if (task.id === taskId) {
+          const newTotalTime = task.timeTracking.totalTimeSpent + milliseconds;
+          
+          return {
+            ...task,
+            timeTracking: {
+              ...task.timeTracking,
+              totalTimeSpent: newTotalTime,
+              sessions: [
+                ...task.timeTracking.sessions,
+                {
+                  start: Date.now() - milliseconds,
+                  end: Date.now(),
+                  duration: milliseconds,
+                  manual: true
+                }
+              ]
+            },
+            actualDuration: Math.floor(newTotalTime / 1000)
+          };
+        }
+        return task;
+      })
+    );
+  }, [setTasks]);
 
-  /**
-   * Resets time tracking for a task
-   */
   const resetTracking = useCallback((taskId) => {
     setTasks(prevTasks => 
       prevTasks.map(task => {
@@ -189,19 +159,13 @@ const addManualTime = useCallback((taskId, minutes) => {
   };
 }
 
-/**
- * Calculates total time spent from sessions
- */
+// Keep the helper functions
 function calculateTotalTimeSpent(timeTracking) {
   if (!timeTracking.isTracking) return timeTracking.totalTimeSpent;
-  
   const currentSessionTime = Date.now() - timeTracking.currentSessionStart;
   return timeTracking.totalTimeSpent + currentSessionTime;
 }
 
-/**
- * Formats seconds into human-readable time
- */
 export function formatTime(seconds) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -216,9 +180,6 @@ export function formatTime(seconds) {
   }
 }
 
-/**
- * Formats time for display (short version)
- */
 export function formatTimeShort(seconds) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
