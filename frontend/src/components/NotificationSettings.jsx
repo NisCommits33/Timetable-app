@@ -1,10 +1,11 @@
 import React from 'react';
-import { Settings, Bell, Volume2, Moon, Sun, Clock } from 'lucide-react';
+import { Settings, Bell, Volume2, Moon, Sun, Clock, Repeat, AlertCircle } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { REMINDER_TIMINGS } from '../utils/notificationTypes';
 
 const NotificationSettings = ({ isDarkMode, isOpen, onClose }) => {
   const { settings, setSettings } = useNotifications();
+  
 
   if (!isOpen) return null;
 
@@ -255,6 +256,126 @@ const NotificationSettings = ({ isDarkMode, isOpen, onClose }) => {
               </div>
             </div>
           )}
+          {/* Reminder Frequency */}
+<div>
+  <div className="flex items-center space-x-3 mb-3">
+    <Repeat className="h-4 w-4 text-gray-500" />
+    <div>
+      <div className="font-medium">Reminder Frequency</div>
+      <div className="text-sm text-gray-500">How often to remind before task starts</div>
+    </div>
+  </div>
+  <div className="grid grid-cols-2 gap-2">
+    {[
+      { value: 'once', label: 'Once' },
+      { value: '5min', label: 'Every 5 min' },
+      { value: '10min', label: 'Every 10 min' },
+      { value: 'until_start', label: 'Until start' }
+    ].map(option => (
+      <button
+        key={option.value}
+        onClick={() => updateSettings({ reminderFrequency: option.value })}
+        className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+          settings.reminderFrequency === option.value
+            ? 'bg-blue-600 text-white'
+            : isDarkMode 
+              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        }`}
+      >
+        {option.label}
+      </button>
+    ))}
+  </div>
+</div>
+
+{/* Overdue Frequency */}
+<div>
+  <div className="flex items-center space-x-3 mb-3">
+    <AlertCircle className="h-4 w-4 text-gray-500" />
+    <div>
+      <div className="font-medium">Overdue Frequency</div>
+      <div className="text-sm text-gray-500">How often to remind after missed start</div>
+    </div>
+  </div>
+  <div className="grid grid-cols-2 gap-2">
+    {[
+      { value: 'once', label: 'Once' },
+      { value: '5min', label: 'Every 5 min' },
+      { value: '10min', label: 'Every 10 min' },
+      { value: 'until_done', label: 'Until done' }
+    ].map(option => (
+      <button
+        key={option.value}
+        onClick={() => updateSettings({ overdueFrequency: option.value })}
+        className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+          settings.overdueFrequency === option.value
+            ? 'bg-blue-600 text-white'
+            : isDarkMode 
+              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        }`}
+      >
+        {option.label}
+      </button>
+    ))}
+  </div>
+</div>
+
+{/* Show Overdue During Work */}
+<div className="flex items-center justify-between">
+  <div className="flex items-center space-x-3">
+    <Clock className="h-4 w-4 text-gray-500" />
+    <div>
+      <div className="font-medium">Overdue During Work</div>
+      <div className="text-sm text-gray-500">Show overdue notifications while timer is running</div>
+    </div>
+  </div>
+  <label className="relative inline-flex items-center cursor-pointer">
+    <input
+      type="checkbox"
+      checked={settings.showInProgressOverdue}
+      onChange={(e) => updateSettings({ showInProgressOverdue: e.target.checked })}
+      className="sr-only peer"
+    />
+    <div className={`w-11 h-6 rounded-full peer ${
+      isDarkMode ? 'bg-gray-700' : 'bg-gray-300'
+    } peer-checked:bg-blue-600 peer-focus:ring-2 peer-focus:ring-blue-500`}>
+      <div className={`absolute top-0.5 left-0.5 bg-white rounded-full h-5 w-5 transition-transform ${
+        settings.showInProgressOverdue ? 'translate-x-5' : ''
+      }`} />
+    </div>
+  </label>
+</div>
+
+{/* Max Reminders Per Task */}
+<div>
+  <div className="flex items-center space-x-3 mb-3">
+    <Bell className="h-4 w-4 text-gray-500" />
+    <div>
+      <div className="font-medium">Max Reminders Per Task</div>
+      <div className="text-sm text-gray-500">Maximum number of reminders before stopping</div>
+    </div>
+  </div>
+  <div className="grid grid-cols-4 gap-2">
+    {[1, 2, 3, 5].map(count => (
+      <button
+        key={count}
+        onClick={() => updateSettings({ maxRemindersPerTask: count })}
+        className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+          settings.maxRemindersPerTask === count
+            ? 'bg-blue-600 text-white'
+            : isDarkMode 
+              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        }`}
+      >
+        {count}
+      </button>
+    ))}
+  </div>
+</div>
+          
         </div>
 
         {/* Footer */}
