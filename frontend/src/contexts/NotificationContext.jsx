@@ -22,7 +22,12 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
       pushEnabled: true,
       breakReminders: true,
       dailySummary: true,
-      quietHours: { enabled: false, start: '22:00', end: '07:00' }
+      quietHours: { enabled: false, start: '22:00', end: '07:00' },
+      // ADD THESE NEW SETTINGS:
+      reminderFrequency: 'once', // 'once', '5min', '10min', 'until_start'
+      overdueFrequency: '5min', // 'once', '5min', '10min', 'until_done'
+      showInProgressOverdue: false, // Whether to show overdue when timer is running
+      maxRemindersPerTask: 3 // Maximum number of reminders per task
     };
   });
 
@@ -134,6 +139,45 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
     return new Date().toLocaleDateString('en-US', { weekday: 'long' });
   };
 
+  // Helper function to determine if notification should be sent based on frequency
+ // Replace the shouldSendNotification function with this:
+const shouldSendNotification = (taskId, type, frequency) => {
+  const now = Date.now();
+  
+  // Get all notifications of this type for this task
+  const taskNotifications = notifications.filter(
+    n => n.taskId === taskId && n.type === type
+  );
+
+  if (taskNotifications.length === 0) {
+    return true; // No notifications yet, send first one
+  }
+
+  // Get the most recent notification of this type
+  const lastNotification = taskNotifications[0]; // Notifications are sorted newest first
+  
+  switch (frequency) {
+    case 'once':
+      return false; // Only send once, already sent
+      
+    case '5min':
+      // Send every 5 minutes
+      return now - lastNotification.timestamp >= 5 * 60 * 1000;
+      
+    case '10min':
+      // Send every 10 minutes  
+      return now - lastNotification.timestamp >= 10 * 60 * 1000;
+      
+    case 'until_start':
+    case 'until_done':
+      // Send every 5 minutes for "until" modes
+      return now - lastNotification.timestamp >= 5 * 60 * 1000;
+      
+    default:
+      return true;
+  }
+};
+
   // Check for upcoming tasks and create reminders
   const checkUpcomingTasks = () => {
     if (!settings.enabled || tasks.length === 0) return;
@@ -163,16 +207,25 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
         hasActiveTask = true;
       }
 
-      // Create reminder if task is starting soon
-      if (timeDiff > 0 && timeDiff <= settings.reminderTiming) {
-        const existingReminder = notifications.find(
-  n => n.taskId === task.id && 
-       n.type === NOTIFICATION_TYPES.REMINDER && 
-       !n.read &&
-       Date.now() - n.timestamp < 60000 // Only consider notifications from last minute
-);
+      // Count existing reminders for this task
+      const taskReminders = notifications.filter(
+        n => n.taskId === task.id && 
+             (n.type === NOTIFICATION_TYPES.REMINDER || n.type === NOTIFICATION_TYPES.OVERDUE) &&
+             !n.read
+      );
 
-        if (!existingReminder) {
+      // Check if we've reached max reminders
+      const reachedMaxReminders = taskReminders.length >= settings.maxRemindersPerTask;
+
+      // REMINDER LOGIC
+      if (timeDiff > 0 && timeDiff <= settings.reminderTiming && !reachedMaxReminders) {
+        const shouldSendReminder = shouldSendNotification(
+          task.id,
+          NOTIFICATION_TYPES.REMINDER,
+          settings.reminderFrequency
+        );
+
+        if (shouldSendReminder) {
           addNotification({
             id: Date.now() + Math.random(),
             type: NOTIFICATION_TYPES.REMINDER,
@@ -185,49 +238,29 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
         }
       }
 
-      // Create overdue notification
-       if (timeDiff < -5 && timeDiff > -60 && !task.timeTracking?.isTracking) { // ADDED: !task.timeTracking?.isTracking
-     const existingOverdue = notifications.find(
-  n => n.taskId === task.id && 
-       n.type === NOTIFICATION_TYPES.OVERDUE && 
-       !n.read &&
-       Date.now() - n.timestamp < 60000 // Only consider notifications from last minute
-);
+      // OVERDUE LOGIC
+      const shouldShowOverdue = settings.showInProgressOverdue || !task.timeTracking?.isTracking;
+      
+      if (timeDiff < -5 && timeDiff > -60 && shouldShowOverdue && !reachedMaxReminders) {
+        const shouldSendOverdue = shouldSendNotification(
+          task.id,
+          NOTIFICATION_TYPES.OVERDUE,
+          settings.overdueFrequency
+        );
 
-      if (!existingOverdue) {
-        addNotification({
-          id: Date.now() + Math.random(),
-          type: NOTIFICATION_TYPES.OVERDUE,
-          taskId: task.id,
-          taskTitle: task.title,
-          message: NOTIFICATION_MESSAGES.overdue(task, Math.abs(Math.round(timeDiff))),
-          timestamp: Date.now(),
-          read: false
-        });
+        if (shouldSendOverdue) {
+          addNotification({
+            id: Date.now() + Math.random(),
+            type: NOTIFICATION_TYPES.OVERDUE,
+            taskId: task.id,
+            taskTitle: task.title,
+            message: NOTIFICATION_MESSAGES.overdue(task, Math.abs(Math.round(timeDiff))),
+            timestamp: Date.now(),
+            read: false
+          });
+        }
       }
-    }
-  });
-  // Add this helper function in NotificationContext.jsx
-const isTaskInProgress = (task) => {
-  // Task is in progress if:
-  // 1. Time tracking is active, OR
-  // 2. Current time is within task time range
-  if (task.timeTracking?.isTracking) return true;
-  
-  const now = new Date();
-  const taskTime = new Date();
-  const [hours, minutes] = task.startTime.split(':').map(Number);
-  taskTime.setHours(hours, minutes, 0, 0);
-  
-  const taskEndTime = new Date(taskTime);
-  const [endHours, endMinutes] = task.endTime.split(':').map(Number);
-  taskEndTime.setHours(endHours, endMinutes, 0, 0);
-  
-  return now >= taskTime && now <= taskEndTime;
-};
-
-// Then use it in the overdue check:
-
+    });
 
     // Break reminder (every 50 minutes of continuous work)
     if (settings.breakReminders && hasActiveTask) {

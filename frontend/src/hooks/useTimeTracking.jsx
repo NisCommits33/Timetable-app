@@ -1,12 +1,11 @@
-// useTimeTracking.js - Remove notification integration for now
+// useTimeTracking.js - with live updates
 import { useState, useEffect, useCallback } from 'react';
-// REMOVE: import { useNotifications } from '../contexts/NotificationContext';
 
 export function useTimeTracking(tasks, setTasks) {
   const [activeTimer, setActiveTimer] = useState(null);
 
   const startTracking = useCallback((taskId) => {
-    setTasks(prevTasks => 
+    setTasks(prevTasks =>
       prevTasks.map(task => {
         if (task.id === taskId) {
           return {
@@ -18,64 +17,29 @@ export function useTimeTracking(tasks, setTasks) {
             }
           };
         }
-        
+
         // Stop any other active timers
         if (task.timeTracking.isTracking) {
-          return {
-            ...task,
-            timeTracking: {
-              ...task.timeTracking,
-              isTracking: false,
-              totalTimeSpent: calculateTotalTimeSpent(task.timeTracking),
-              sessions: [
-                ...task.timeTracking.sessions,
-                {
-                  start: task.timeTracking.currentSessionStart,
-                  end: Date.now(),
-                  duration: Date.now() - task.timeTracking.currentSessionStart
-                }
-              ]
-            }
-          };
+          return stopTaskSession(task);
         }
-        
+
         return task;
       })
     );
-    
+
     setActiveTimer(taskId);
   }, [setTasks]);
 
   const stopTracking = useCallback((taskId) => {
-    setTasks(prevTasks => 
+    setTasks(prevTasks =>
       prevTasks.map(task => {
         if (task.id === taskId && task.timeTracking.isTracking) {
-          const sessionDuration = Date.now() - task.timeTracking.currentSessionStart;
-          const newTotalTime = task.timeTracking.totalTimeSpent + sessionDuration;
-          
-          return {
-            ...task,
-            timeTracking: {
-              ...task.timeTracking,
-              isTracking: false,
-              totalTimeSpent: newTotalTime,
-              currentSessionStart: null,
-              sessions: [
-                ...task.timeTracking.sessions,
-                {
-                  start: task.timeTracking.currentSessionStart,
-                  end: Date.now(),
-                  duration: sessionDuration
-                }
-              ]
-            },
-            actualDuration: Math.floor(newTotalTime / 1000)
-          };
+          return stopTaskSession(task);
         }
         return task;
       })
     );
-    
+
     setActiveTimer(null);
   }, [setTasks]);
 
@@ -92,11 +56,11 @@ export function useTimeTracking(tasks, setTasks) {
 
   const addManualTime = useCallback((taskId, minutes) => {
     const milliseconds = minutes * 60 * 1000;
-    setTasks(prevTasks => 
+    setTasks(prevTasks =>
       prevTasks.map(task => {
         if (task.id === taskId) {
           const newTotalTime = task.timeTracking.totalTimeSpent + milliseconds;
-          
+
           return {
             ...task,
             timeTracking: {
@@ -105,7 +69,7 @@ export function useTimeTracking(tasks, setTasks) {
               sessions: [
                 ...task.timeTracking.sessions,
                 {
-                  start: Date.now() - milliseconds,
+                  start: Date.now(),
                   end: Date.now(),
                   duration: milliseconds,
                   manual: true
@@ -121,7 +85,7 @@ export function useTimeTracking(tasks, setTasks) {
   }, [setTasks]);
 
   const resetTracking = useCallback((taskId) => {
-    setTasks(prevTasks => 
+    setTasks(prevTasks =>
       prevTasks.map(task => {
         if (task.id === taskId) {
           return {
@@ -139,6 +103,30 @@ export function useTimeTracking(tasks, setTasks) {
       })
     );
   }, [setTasks]);
+
+  // Live timer tick
+  useEffect(() => {
+    if (!activeTimer) return;
+
+    const interval = setInterval(() => {
+      setTasks(prevTasks =>
+        prevTasks.map(task => {
+          if (task.id === activeTimer && task.timeTracking.isTracking) {
+            const sessionDuration = Date.now() - task.timeTracking.currentSessionStart;
+            const totalSoFar = task.timeTracking.totalTimeSpent + sessionDuration;
+
+            return {
+              ...task,
+              actualDuration: Math.floor(totalSoFar / 1000)
+            };
+          }
+          return task;
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeTimer, setTasks]);
 
   // Auto-stop timer when component unmounts
   useEffect(() => {
@@ -159,11 +147,29 @@ export function useTimeTracking(tasks, setTasks) {
   };
 }
 
-// Keep the helper functions
-function calculateTotalTimeSpent(timeTracking) {
-  if (!timeTracking.isTracking) return timeTracking.totalTimeSpent;
-  const currentSessionTime = Date.now() - timeTracking.currentSessionStart;
-  return timeTracking.totalTimeSpent + currentSessionTime;
+// --- Helpers ---
+function stopTaskSession(task) {
+  const sessionDuration = Date.now() - task.timeTracking.currentSessionStart;
+  const newTotalTime = task.timeTracking.totalTimeSpent + sessionDuration;
+
+  return {
+    ...task,
+    timeTracking: {
+      ...task.timeTracking,
+      isTracking: false,
+      totalTimeSpent: newTotalTime,
+      currentSessionStart: null,
+      sessions: [
+        ...task.timeTracking.sessions,
+        {
+          start: task.timeTracking.currentSessionStart,
+          end: Date.now(),
+          duration: sessionDuration
+        }
+      ]
+    },
+    actualDuration: Math.floor(newTotalTime / 1000)
+  };
 }
 
 export function formatTime(seconds) {
@@ -171,22 +177,16 @@ export function formatTime(seconds) {
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${secs}s`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${secs}s`;
-  } else {
-    return `${secs}s`;
-  }
+  if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
+  if (minutes > 0) return `${minutes}m ${secs}s`;
+  return `${secs}s`;
 }
 
 export function formatTimeShort(seconds) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  } else {
-    return `${minutes}m`;
-  }
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m`;
+  return `<1m`;
 }

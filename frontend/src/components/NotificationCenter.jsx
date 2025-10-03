@@ -73,6 +73,11 @@ const getNotificationIcon = (type) => {
             }`}>
               <h3 className="font-semibold">Notifications</h3>
               <div className="flex items-center space-x-2">
+                <div>
+                <p className="text-xs text-gray-500">
+      {unreadCount} unread • {notifications.length} total
+    </p>
+    </div>
                 <button
                   onClick={() => setShowSettings(true)}
                   className={`p-1 rounded ${
