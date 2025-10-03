@@ -382,12 +382,12 @@ function TaskItem({
         )}
         {/* Time Tracking Display */}
          {/* Add this debug section in your TaskItem return, before the timer section: */}
-{/* <div className="text-xs text-gray-500 bg-yellow-100 dark:bg-yellow-900 p-1 mb-2 rounded">
+<div className="text-xs text-gray-500 bg-yellow-100 dark:bg-yellow-900 p-1 mb-2 rounded">
   Debug: 
   Estimated: {task.estimatedDuration}s = {formatTimeShort(task.estimatedDuration)} | 
   Spent: {Math.floor(currentTimeSpent/1000)}s = {formatTimeShort(Math.floor(currentTimeSpent/1000))} |
   Progress: {Math.round((currentTimeSpent/1000/task.estimatedDuration)*100)}%
-</div> */}
+</div>
 
         {/* TIMER SECTION - CONDITIONAL RENDERING */}
       {showTimerSection && (
