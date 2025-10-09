@@ -1,5 +1,5 @@
 // components/TaskItem.jsx
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Clock,
   MapPin,
@@ -16,6 +16,9 @@ import {
   Square,
   Plus,
   Minus,
+  Circle,
+  CheckCircle,
+  MessageCircle,
 } from "lucide-react";
 import { formatTime, formatTimeShort } from "../hooks/useTimeTracking";
 
@@ -37,13 +40,15 @@ function TaskItem({
   onToggleTracking,
   onAddManualTime,
   onResetTracking,
+  onToggleCompletion, // This should exist
+  onOpenCompletionModal,
 }) {
   const [showActions, setShowActions] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showTimeControls, setShowTimeControls] = useState(false);
   const [manualTimeInput, setManualTimeInput] = useState("15");
   const [currentTime, setCurrentTime] = useState(Date.now()); // ADD THIS
-  const [showTimerSection,setShowTimerSection] = useState(false);
+  const [showTimerSection, setShowTimerSection] = useState(false);
 
   // Real-time updates when tracking is active
   useEffect(() => {
@@ -59,12 +64,13 @@ function TaskItem({
   // Calculate current time if tracking is active - UPDATED
   const getCurrentTimeSpent = () => {
     if (task.timeTracking.isTracking) {
-      const currentSessionTime = currentTime - task.timeTracking.currentSessionStart;
+      const currentSessionTime =
+        currentTime - task.timeTracking.currentSessionStart;
       return task.timeTracking.totalTimeSpent + currentSessionTime;
     }
     return task.timeTracking.totalTimeSpent;
   };
-  
+
   const currentTimeSpent = getCurrentTimeSpent();
   /**
    * Gets comprehensive color scheme based on task priority
@@ -73,56 +79,102 @@ function TaskItem({
   const getPriorityTheme = () => {
     const themes = {
       high: {
-        // Main card colors
-        cardBorder: "border-l-4 border-l-red-500",
-        cardBg: "bg-red-50 dark:bg-red-900/10",
-        cardHover: "hover:bg-red-100 dark:hover:bg-red-900/20",
-
-        // Text and icon colors
-        title: "text-red-900 dark:text-red-100",
-        text: "text-red-800/80 dark:text-red-200/80",
-        icon: "text-red-600 dark:text-red-400",
-
-        // Badge colors
-        badgeBg: "bg-red-100 dark:bg-red-900/30",
-        badgeText: "text-red-800 dark:text-red-200",
-        badgeBorder: "border-red-200 dark:border-red-700",
-
-        // Priority indicator
-        indicator: "bg-red-500",
-        indicatorGlow: "shadow-lg shadow-red-500/25",
+        cardBorder: task.completed 
+          ? "border-l-4 border-l-gray-400" 
+          : "border-l-4 border-l-red-500",
+        cardBg: task.completed
+          ? "bg-gray-100 dark:bg-gray-700/50"
+          : "bg-red-50 dark:bg-red-900/10",
+        cardHover: task.completed
+          ? "hover:bg-gray-200 dark:hover:bg-gray-600/50"
+          : "hover:bg-red-100 dark:hover:bg-red-900/20",
+        title: task.completed
+          ? "text-gray-500 dark:text-gray-400 line-through"
+          : "text-red-900 dark:text-red-100",
+        text: task.completed
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-red-800/80 dark:text-red-200/80",
+        icon: task.completed
+          ? "text-gray-400 dark:text-gray-500"
+          : "text-red-600 dark:text-red-400",
+        badgeBg: task.completed
+          ? "bg-gray-200 dark:bg-gray-600"
+          : "bg-red-100 dark:bg-red-900/30",
+        badgeText: task.completed
+          ? "text-gray-600 dark:text-gray-400"
+          : "text-red-800 dark:text-red-200",
+        badgeBorder: task.completed
+          ? "border-gray-300 dark:border-gray-500"
+          : "border-red-200 dark:border-red-700",
+        indicator: task.completed ? "bg-gray-400" : "bg-red-500",
+        indicatorGlow: task.completed ? "" : "shadow-lg shadow-red-500/25",
       },
       medium: {
-        cardBorder: "border-l-4 border-l-yellow-500",
-        cardBg: "bg-yellow-50 dark:bg-yellow-900/10",
-        cardHover: "hover:bg-yellow-100 dark:hover:bg-yellow-900/20",
-        title: "text-yellow-900 dark:text-yellow-100",
-        text: "text-yellow-800/80 dark:text-yellow-200/80",
-        icon: "text-yellow-600 dark:text-yellow-400",
-        badgeBg: "bg-yellow-100 dark:bg-yellow-900/30",
-        badgeText: "text-yellow-800 dark:text-yellow-200",
-        badgeBorder: "border-yellow-200 dark:border-yellow-700",
-        indicator: "bg-yellow-500",
-        indicatorGlow: "shadow-lg shadow-yellow-500/25",
+        cardBorder: task.completed 
+          ? "border-l-4 border-l-gray-400" 
+          : "border-l-4 border-l-yellow-500",
+        cardBg: task.completed
+          ? "bg-gray-100 dark:bg-gray-700/50"
+          : "bg-yellow-50 dark:bg-yellow-900/10",
+        cardHover: task.completed
+          ? "hover:bg-gray-200 dark:hover:bg-gray-600/50"
+          : "hover:bg-yellow-100 dark:hover:bg-yellow-900/20",
+        title: task.completed
+          ? "text-gray-500 dark:text-gray-400 line-through"
+          : "text-yellow-900 dark:text-yellow-100",
+        text: task.completed
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-yellow-800/80 dark:text-yellow-200/80",
+        icon: task.completed
+          ? "text-gray-400 dark:text-gray-500"
+          : "text-yellow-600 dark:text-yellow-400",
+        badgeBg: task.completed
+          ? "bg-gray-200 dark:bg-gray-600"
+          : "bg-yellow-100 dark:bg-yellow-900/30",
+        badgeText: task.completed
+          ? "text-gray-600 dark:text-gray-400"
+          : "text-yellow-800 dark:text-yellow-200",
+        badgeBorder: task.completed
+          ? "border-gray-300 dark:border-gray-500"
+          : "border-yellow-200 dark:border-yellow-700",
+        indicator: task.completed ? "bg-gray-400" : "bg-yellow-500",
+        indicatorGlow: task.completed ? "" : "shadow-lg shadow-yellow-500/25",
       },
       low: {
-        cardBorder: "border-l-4 border-l-green-500",
-        cardBg: "bg-green-50 dark:bg-green-900/10",
-        cardHover: "hover:bg-green-100 dark:hover:bg-green-900/20",
-        title: "text-green-900 dark:text-green-100",
-        text: "text-green-800/80 dark:text-green-200/80",
-        icon: "text-green-600 dark:text-green-400",
-        badgeBg: "bg-green-100 dark:bg-green-900/30",
-        badgeText: "text-green-800 dark:text-green-200",
-        badgeBorder: "border-green-200 dark:border-green-700",
-        indicator: "bg-green-500",
-        indicatorGlow: "shadow-lg shadow-green-500/25",
+        cardBorder: task.completed 
+          ? "border-l-4 border-l-gray-400" 
+          : "border-l-4 border-l-green-500",
+        cardBg: task.completed
+          ? "bg-gray-100 dark:bg-gray-700/50"
+          : "bg-green-50 dark:bg-green-900/10",
+        cardHover: task.completed
+          ? "hover:bg-gray-200 dark:hover:bg-gray-600/50"
+          : "hover:bg-green-100 dark:hover:bg-green-900/20",
+        title: task.completed
+          ? "text-gray-500 dark:text-gray-400 line-through"
+          : "text-green-900 dark:text-green-100",
+        text: task.completed
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-green-800/80 dark:text-green-200/80",
+        icon: task.completed
+          ? "text-gray-400 dark:text-gray-500"
+          : "text-green-600 dark:text-green-400",
+        badgeBg: task.completed
+          ? "bg-gray-200 dark:bg-gray-600"
+          : "bg-green-100 dark:bg-green-900/30",
+        badgeText: task.completed
+          ? "text-gray-600 dark:text-gray-400"
+          : "text-green-800 dark:text-green-200",
+        badgeBorder: task.completed
+          ? "border-gray-300 dark:border-gray-500"
+          : "border-green-200 dark:border-green-700",
+        indicator: task.completed ? "bg-gray-400" : "bg-green-500",
+        indicatorGlow: task.completed ? "" : "shadow-lg shadow-green-500/25",
       },
     };
 
     return themes[task.priority] || themes.medium;
   };
-
   /**
    * Toggles expanded view for more details
    */
@@ -144,6 +196,27 @@ function TaskItem({
       setShowTimeControls(false);
     }
   };
+   /**
+   * Handles completion toggle with modal for new completions
+   */
+  const handleCompletionToggle = (e) => {
+    e.stopPropagation();
+    
+    if (task.completed) {
+      // If already completed, just toggle back without modal
+      if (onToggleCompletion) {
+        onToggleCompletion(task.id);
+      }
+    } else {
+      // If not completed, open completion modal
+      if (onOpenCompletionModal) {
+        onOpenCompletionModal(task);
+      } else if (onToggleCompletion) {
+        // Fallback to simple toggle if modal not available
+        onToggleCompletion(task.id);
+      }
+    }
+  };
   return (
     <div
       className={`relative rounded-lg transition-all duration-300 cursor-pointer group overflow-hidden ${priorityTheme.cardBorder} ${priorityTheme.cardBg} ${priorityTheme.cardHover}`}
@@ -162,6 +235,36 @@ function TaskItem({
           <div className="flex-1 min-w-0 pr-2">
             {/* Title and Priority */}
             <div className="flex items-center space-x-2 mb-1">
+                            {/* // Update the completion checkbox to show different states */}
+              <button
+                onClick={handleCompletionToggle}
+                className={`flex-shrink-0 mt-1 transition-all ${
+                  task.completed
+                    ? task.completionType === "cancelled"
+                      ? "text-red-500 hover:text-red-600"
+                      : task.completionType === "partially"
+                      ? "text-yellow-500 hover:text-yellow-600"
+                      : "text-green-500 hover:text-green-600"
+                    : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+                }`}
+                title={
+                  task.completed
+                    ? `Completed: ${task.completionType}`
+                    : "Mark as complete"
+                }
+              >
+                {task.completed ? (
+                  task.completionType === "cancelled" ? (
+                    <X className="h-4 w-4" />
+                  ) : task.completionType === "partially" ? (
+                    <CheckCircle className="h-4 w-4" fill="currentColor" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4" fill="currentColor" />
+                  )
+                ) : (
+                  <Circle className="h-4 w-4" />
+                )}
+              </button>
               <h3
                 className={`font-semibold text-sm truncate ${priorityTheme.title}`}
               >
@@ -182,15 +285,20 @@ function TaskItem({
                   setShowTimerSection(!showTimerSection);
                 }}
                 className={`flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium transition-all ${
-                  showTimerSection 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  showTimerSection
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
                 }`}
                 title={showTimerSection ? "Hide timer" : "Show timer"}
               >
                 <Clock className="h-3 w-3" />
                 <span>{showTimerSection ? "Hide" : "Timer"}</span>
               </button>
+
+
+              
+              
+
             </div>
 
             {/* Time and Day */}
@@ -251,6 +359,7 @@ function TaskItem({
             </div>
           )}
         </div>
+        
 
         {/* Description - Always visible if available */}
         {task.description && (
@@ -381,139 +490,152 @@ function TaskItem({
           </div>
         )}
         {/* Time Tracking Display */}
-         {/* Add this debug section in your TaskItem return, before the timer section: */}
-<div className="text-xs text-gray-500 bg-yellow-100 dark:bg-yellow-900 p-1 mb-2 rounded">
-  Debug: 
-  Estimated: {task.estimatedDuration}s = {formatTimeShort(task.estimatedDuration)} | 
-  Spent: {Math.floor(currentTimeSpent/1000)}s = {formatTimeShort(Math.floor(currentTimeSpent/1000))} |
-  Progress: {Math.round((currentTimeSpent/1000/task.estimatedDuration)*100)}%
-</div>
+        {/* Add this debug section in your TaskItem return, before the timer section: */}
+        {/* <div className="text-xs text-gray-500 bg-yellow-100 dark:bg-yellow-900 p-1 mb-2 rounded">
+          Debug: Estimated: {task.estimatedDuration}s ={" "}
+          {formatTimeShort(task.estimatedDuration)} | Spent:{" "}
+          {Math.floor(currentTimeSpent / 1000)}s ={" "}
+          {formatTimeShort(Math.floor(currentTimeSpent / 1000))} | Progress:{" "}
+          {Math.round((currentTimeSpent / 1000 / task.estimatedDuration) * 100)}
+          %
+        </div> */}
+        {/* // Add remarks display if task has remarks */}
+              {task.remarks && (
+                <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
+                  <div className="flex items-start space-x-2">
+                    <MessageCircle className="h-3 w-3 mt-0.5 text-blue-500 flex-shrink-0" />
+                    <span className="text-blue-700 dark:text-blue-300">
+                      {task.remarks}
+                    </span>
+                  </div>
+                </div>
+              )}
 
         {/* TIMER SECTION - CONDITIONAL RENDERING */}
-      {showTimerSection && (
-        <div className="mb-3 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-          {/* Timer Control Button */}
-          <div className="flex items-center justify-between mb-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log(
-                  "Toggle tracking for task:",
-                  task.id,
-                  "Current state:",
-                  task.timeTracking.isTracking
-                );
-                onToggleTracking(task.id);
-              }}
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded text-sm font-medium transition-all ${
-                task.timeTracking.isTracking
-                  ? "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
-                  : "bg-green-500 hover:bg-green-600 text-white shadow-lg shadow-green-500/30"
-              }`}
-            >
-              {task.timeTracking.isTracking ? (
-                <>
-                  <Square className="h-4 w-4" />
-                  <span>Stop Timer</span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" />
-                  <span>Start Timer</span>
-                </>
-              )}
-            </button>
-
-            {/* Current Time Display */}
-            <div
-              className={`text-sm font-mono font-bold ${
-                task.timeTracking.isTracking
-                  ? "text-green-600 dark:text-green-400 animate-pulse"
-                  : "text-gray-600 dark:text-gray-400"
-              }`}
-            >
-              {formatTimeShort(Math.floor(currentTimeSpent / 1000))}
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          {task.estimatedDuration > 0 && (
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
-              <div
-                className="bg-green-500 h-2 rounded-full transition-all duration-500"
-                style={{
-                  width: `${Math.min(
-                    100,
-                    (currentTimeSpent / 1000 / task.estimatedDuration) * 100
-                  )}%`,
-                }}
-              />
-            </div>
-          )}
-
-          {/* Manual Time Controls */}
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-600 dark:text-gray-400">
-              Estimated: {formatTimeShort(task.estimatedDuration)}
-            </span>
-
-            <div className="flex items-center space-x-2">
+        {showTimerSection && (
+          <div className="mb-3 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+            {/* Timer Control Button */}
+            <div className="flex items-center justify-between mb-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowTimeControls(!showTimeControls);
+                  console.log(
+                    "Toggle tracking for task:",
+                    task.id,
+                    "Current state:",
+                    task.timeTracking.isTracking
+                  );
+                  onToggleTracking(task.id);
                 }}
-                className="text-blue-600 dark:text-blue-400 hover:underline"
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded text-sm font-medium transition-all ${
+                  task.timeTracking.isTracking
+                    ? "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
+                    : "bg-green-500 hover:bg-green-600 text-white shadow-lg shadow-green-500/30"
+                }`}
               >
-                {showTimeControls ? "Cancel" : "Add Time"}
+                {task.timeTracking.isTracking ? (
+                  <>
+                    <Square className="h-4 w-4" />
+                    <span>Stop Timer</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4" />
+                    <span>Start Timer</span>
+                  </>
+                )}
               </button>
 
-              {currentTimeSpent > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onResetTracking(task.id);
-                  }}
-                  className="text-red-600 dark:text-red-400 hover:underline"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Manual Time Input */}
-          {showTimeControls && (
-            <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded animate-fadeIn">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-600 dark:text-gray-400">
-                  Add:
-                </span>
-                <input
-                  type="number"
-                  value={manualTimeInput}
-                  onChange={(e) => setManualTimeInput(e.target.value)}
-                  className="w-16 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs"
-                  min="1"
-                  max="480"
-                  placeholder="15"
-                />
-                <span className="text-xs text-gray-600 dark:text-gray-400">
-                  minutes
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddManualTime();
-                  }}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
-                >
-                  Add
-                </button>
+              {/* Current Time Display */}
+              <div
+                className={`text-sm font-mono font-bold ${
+                  task.timeTracking.isTracking
+                    ? "text-green-600 dark:text-green-400 animate-pulse"
+                    : "text-gray-600 dark:text-gray-400"
+                }`}
+              >
+                {formatTimeShort(Math.floor(currentTimeSpent / 1000))}
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Progress Bar */}
+            {task.estimatedDuration > 0 && (
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                <div
+                  className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (currentTimeSpent / 1000 / task.estimatedDuration) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Manual Time Controls */}
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600 dark:text-gray-400">
+                Estimated: {formatTimeShort(task.estimatedDuration)}
+              </span>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowTimeControls(!showTimeControls);
+                  }}
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {showTimeControls ? "Cancel" : "Add Time"}
+                </button>
+
+                {currentTimeSpent > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onResetTracking(task.id);
+                    }}
+                    className="text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Manual Time Input */}
+            {showTimeControls && (
+              <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded animate-fadeIn">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
+                    Add:
+                  </span>
+                  <input
+                    type="number"
+                    value={manualTimeInput}
+                    onChange={(e) => setManualTimeInput(e.target.value)}
+                    className="w-16 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs"
+                    min="1"
+                    max="480"
+                    placeholder="15"
+                  />
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
+                    minutes
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddManualTime();
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

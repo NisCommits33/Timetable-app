@@ -12,6 +12,7 @@ import Snackbar from "./components/Snackbar";
 import ViewSwitcher from "./components/ViewSwitcher";
 import DayView from "./components/DayView";
 import ListView from "./components/ListView";
+import CompletionModal from "./components/CompletionModal";
 
 // ... your initialTasks array remains the same ...
 // In App.jsx - Update your initialTasks array
@@ -235,6 +236,7 @@ function App() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Controls edit modal visibility
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState("week"); // 'week', 'day', 'list', 'board', 'timeline'
+
   // Initialize time tracking
   const {
     activeTimer,
@@ -411,6 +413,68 @@ function App() {
       timeTracking: task.timeTracking,
     }))
   );
+    const [completionModal, setCompletionModal] = useState({
+    isOpen: false,
+    task: null,
+  });
+
+  // ToggleTask COmpletion
+  const handleCompleteTask = (taskId, completionData) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => {
+        if (task.id === taskId) {
+          return {
+            ...task,
+            completed: completionData.completed,
+            completionType: completionData.completionType,
+            remarks: completionData.remarks,
+            completedAt: completionData.completedAt,
+            timeSpent: completionData.timeSpent,
+            satisfaction: completionData.satisfaction,
+            actualDuration:
+              completionData.actualDuration || task.actualDuration,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return task;
+      })
+    );
+
+    // Show success notification
+    if (completionData.completed) {
+      showSnackbar(
+        `Task completed! ${completionData.remarks ? "Remarks added." : ""}`,
+        {
+          type: "success",
+        }
+      );
+    }
+  };
+
+  // Simple toggle for quick completion (without modal)
+  const quickToggleCompletion = (taskId) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (task && !task.completed) {
+      // Open completion modal for proper completion
+      setCompletionModal({
+        isOpen: true,
+        task: task,
+      });
+    } else {
+      // Just toggle completion status for already completed tasks
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                completed: !task.completed,
+                completedAt: !task.completed ? new Date().toISOString() : null,
+              }
+            : task
+        )
+      );
+    }
+  };
   return (
     <NotificationProvider tasks={tasks}>
       <SnackbarProvider>
@@ -473,7 +537,6 @@ function App() {
               </div>
             </div>
           </header>
-
           {/* Main Content Area */}
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -492,79 +555,96 @@ function App() {
               </div>
 
               {/* Main Content - Week View */}
-             <div className="lg:col-span-3">
-  <div className={`p-6 rounded-xl border transition-colors duration-200 ${
-    isDarkMode
-      ? 'border-gray-700 bg-gray-800'
-      : 'border-gray-200 bg-white'
-  }`}>
-    {/* View Switcher */}
-    <ViewSwitcher 
-      currentView={currentView}
-      onViewChange={setCurrentView}
-      isDarkMode={isDarkMode}
-    />
-    
-    {/* View Content */}
-    <div className="mt-6">
-      {currentView === 'week' && (
-        <WeekView
-          tasks={tasks}
-          onDayClick={handleDayClick}
-          selectedDay={selectedDay}
-          onDeleteTask={deleteTask}
-          onEditTask={handleEditTask}
-          onViewDetails={handleViewDetails}
-          onTaskMove={handleTaskMove}
-          isDarkMode={isDarkMode}
-          onToggleTracking={toggleTracking}
-          onAddManualTime={addManualTime}
-          onResetTracking={resetTracking}
-        />
-      )}
-      
-      {currentView === 'day' && (
-        <DayView
-          tasks={tasks}
-          selectedDay={selectedDay}
-          onTaskClick={handleViewDetails}
-          onEditTask={handleEditTask}
-          onDeleteTask={deleteTask}
-          isDarkMode={isDarkMode}
-          onToggleTracking={toggleTracking}
-          onAddManualTime={addManualTime}
-          onResetTracking={resetTracking}
-        />
-      )}
-      
-      {currentView === 'list' && (
-        <ListView
-          tasks={tasks}
-          onTaskClick={handleViewDetails}
-          onEditTask={handleEditTask}
-          onDeleteTask={deleteTask}
-          isDarkMode={isDarkMode}
-          onToggleTracking={toggleTracking}
-        />
-      )}
-      
-      {currentView === 'board' && (
-        <div className="text-center py-12 text-gray-500">
-          Board View - Coming Soon!
-        </div>
-      )}
-      
-      {currentView === 'timeline' && (
-        <div className="text-center py-12 text-gray-500">
-          Timeline View - Coming Soon!
-        </div>
-      )}
-    </div>
-  </div>
-</div>
+              <div className="lg:col-span-3">
+                <div
+                  className={`p-6 rounded-xl border transition-colors duration-200 ${
+                    isDarkMode
+                      ? "border-gray-700 bg-gray-800"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  {/* View Switcher */}
+                  <ViewSwitcher
+                    currentView={currentView}
+                    onViewChange={setCurrentView}
+                    isDarkMode={isDarkMode}
+                    onToggleCompletion={quickToggleCompletion}
+                    onOpenCompletionModal={(task) =>
+                      setCompletionModal({ isOpen: true, task: task })
+                    }
+                  />
+
+                  {/* View Content */}
+                  <div className="mt-6">
+                    {currentView === "week" && (
+                      <WeekView
+                        tasks={tasks}
+                        onDayClick={handleDayClick}
+                        selectedDay={selectedDay}
+                        onDeleteTask={deleteTask}
+                        onEditTask={handleEditTask}
+                        onViewDetails={handleViewDetails}
+                        onTaskMove={handleTaskMove}
+                        isDarkMode={isDarkMode}
+                        onToggleTracking={toggleTracking}
+                        onAddManualTime={addManualTime}
+                        onResetTracking={resetTracking}
+                        onToggleCompletion={quickToggleCompletion}
+                        onOpenCompletionModal={(task) =>
+                          setCompletionModal({ isOpen: true, task: task })
+                        }
+                      />
+                    )}
+
+                    {currentView === "day" && (
+                      <DayView
+                        tasks={tasks}
+                        selectedDay={selectedDay}
+                        onTaskClick={handleViewDetails}
+                        onEditTask={handleEditTask}
+                        onDeleteTask={deleteTask}
+                        isDarkMode={isDarkMode}
+                        onToggleTracking={toggleTracking}
+                        onAddManualTime={addManualTime}
+                        onResetTracking={resetTracking}
+                        onToggleCompletion={quickToggleCompletion}
+                        onOpenCompletionModal={(task) =>
+                          setCompletionModal({ isOpen: true, task: task })
+                        }
+                      />
+                    )}
+
+                    {currentView === "list" && (
+                      <ListView
+                        tasks={tasks}
+                        onTaskClick={handleViewDetails}
+                        onEditTask={handleEditTask}
+                        onDeleteTask={deleteTask}
+                        isDarkMode={isDarkMode}
+                        onToggleTracking={toggleTracking}
+                        onToggleCompletion={quickToggleCompletion}
+                        onOpenCompletionModal={(task) =>
+                          setCompletionModal({ isOpen: true, task: task })
+                        }
+                      />
+                    )}
+
+                    {currentView === "board" && (
+                      <div className="text-center py-12 text-gray-500">
+                        Board View - Coming Soon!
+                      </div>
+                    )}
+
+                    {currentView === "timeline" && (
+                      <div className="text-center py-12 text-gray-500">
+                        Timeline View - Coming Soon!
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </main>
-
           {/* Task Detail Modal */}
           <TaskDetailModal
             open={detailModalOpen}
@@ -580,7 +660,14 @@ function App() {
             }}
             isDarkMode={isDarkMode}
           />
-
+          {/* Completion Modal */}4
+          <CompletionModal
+            isOpen={completionModal.isOpen}
+            onClose={() => setCompletionModal({ isOpen: false, task: null })}
+            task={completionModal.task}
+            onComplete={handleCompleteTask}
+            isDarkMode={isDarkMode}
+          />
           {/* Edit Task Modal */}
           {isEditModalOpen && editingTask && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

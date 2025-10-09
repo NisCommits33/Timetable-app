@@ -16,6 +16,8 @@ export function SortableTaskItem({
   onToggleTracking,
   onAddManualTime,
   onResetTracking,
+  onToggleCompletion,        // ADD THIS
+  onOpenCompletionModal  
 }) {
   const {
     attributes,
@@ -58,6 +60,8 @@ export function SortableTaskItem({
         onToggleTracking={onToggleTracking}
         onAddManualTime={onAddManualTime}
         onResetTracking={onResetTracking}
+        onToggleCompletion={onToggleCompletion}        // ADD THIS
+      onOpenCompletionModal={onOpenCompletionModal} 
       />
     </div>
   );
