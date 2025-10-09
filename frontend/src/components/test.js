@@ -1,58 +1,410 @@
-// Add this function to check progress in real-time
-const checkProgressNotifications = () => {
-  if (!settings.enabled) return;
+// components/TaskItem.jsx
+import { useState, useEffect } from "react";
+import {
+  Clock,
+  MapPin,
+  AlertCircle,
+  FileText,
+  Tag,
+  Calendar,
+  Eye,
+  Edit3,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Play,
+  Square,
+  Plus,
+  Minus,
+  CheckCircle,
+  Circle,
+  X,
+  MessageCircle
+} from "lucide-react";
+import { formatTime, formatTimeShort } from "../hooks/useTimeTracking";
 
-  tasks.forEach(task => {
-    if (task.completed || !task.timeTracking.isTracking) return;
+/**
+ * TaskItem Component - Enhanced task card with priority colors and expandable details
+ * @param {Object} props - Component properties
+ * @param {Object} props.task - The task object to display
+ * @param {Function} props.onDelete - Callback to delete this task
+ * @param {Function} props.onEdit - Callback to edit this task
+ * @param {Function} props.onViewDetails - Callback to view task details
+ * @param {boolean} props.isDarkMode - Current theme mode for styling
+ * @param {Function} props.onToggleTracking - Callback to toggle time tracking
+ * @param {Function} props.onAddManualTime - Callback to add manual time
+ * @param {Function} props.onResetTracking - Callback to reset time tracking
+ * @param {Function} props.onToggleCompletion - Callback to toggle completion
+ * @param {Function} props.onOpenCompletionModal - Callback to open completion modal
+ */
+function TaskItem({
+  task,
+  onDelete,
+  onEdit,
+  onViewDetails,
+  isDarkMode,
+  onToggleTracking,
+  onAddManualTime,
+  onResetTracking,
+  onToggleCompletion,
+  onOpenCompletionModal
+}) {
+  const [showActions, setShowActions] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showTimeControls, setShowTimeControls] = useState(false);
+  const [manualTimeInput, setManualTimeInput] = useState("15");
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [showTimerSection, setShowTimerSection] = useState(false);
 
-    const timeSpent = calculateCurrentTimeSpent(task.timeTracking);
-    const timeSpentSeconds = Math.floor(timeSpent / 1000);
-    const estimatedSeconds = task.estimatedDuration;
+  // Real-time updates when tracking is active
+  useEffect(() => {
+    let interval;
+    if (task.timeTracking.isTracking) {
+      interval = setInterval(() => {
+        setCurrentTime(Date.now());
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [task.timeTracking.isTracking]);
 
-    if (!estimatedSeconds || estimatedSeconds === 0) return;
+  // Calculate current time if tracking is active
+  const getCurrentTimeSpent = () => {
+    if (task.timeTracking.isTracking) {
+      const currentSessionTime = currentTime - task.timeTracking.currentSessionStart;
+      return task.timeTracking.totalTimeSpent + currentSessionTime;
+    }
+    return task.timeTracking.totalTimeSpent;
+  };
 
-    const completionPercent = (timeSpentSeconds / estimatedSeconds) * 100;
+  const currentTimeSpent = getCurrentTimeSpent();
+
+  /**
+   * Gets comprehensive color scheme based on task priority and completion
+   */
+  const getPriorityTheme = () => {
+    const themes = {
+      high: {
+        cardBorder: task.completed 
+          ? "border-l-4 border-l-gray-400" 
+          : "border-l-4 border-l-red-500",
+        cardBg: task.completed
+          ? "bg-gray-100 dark:bg-gray-700/50"
+          : "bg-red-50 dark:bg-red-900/10",
+        cardHover: task.completed
+          ? "hover:bg-gray-200 dark:hover:bg-gray-600/50"
+          : "hover:bg-red-100 dark:hover:bg-red-900/20",
+        title: task.completed
+          ? "text-gray-500 dark:text-gray-400 line-through"
+          : "text-red-900 dark:text-red-100",
+        text: task.completed
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-red-800/80 dark:text-red-200/80",
+        icon: task.completed
+          ? "text-gray-400 dark:text-gray-500"
+          : "text-red-600 dark:text-red-400",
+        badgeBg: task.completed
+          ? "bg-gray-200 dark:bg-gray-600"
+          : "bg-red-100 dark:bg-red-900/30",
+        badgeText: task.completed
+          ? "text-gray-600 dark:text-gray-400"
+          : "text-red-800 dark:text-red-200",
+        badgeBorder: task.completed
+          ? "border-gray-300 dark:border-gray-500"
+          : "border-red-200 dark:border-red-700",
+        indicator: task.completed ? "bg-gray-400" : "bg-red-500",
+        indicatorGlow: task.completed ? "" : "shadow-lg shadow-red-500/25",
+      },
+      medium: {
+        cardBorder: task.completed 
+          ? "border-l-4 border-l-gray-400" 
+          : "border-l-4 border-l-yellow-500",
+        cardBg: task.completed
+          ? "bg-gray-100 dark:bg-gray-700/50"
+          : "bg-yellow-50 dark:bg-yellow-900/10",
+        cardHover: task.completed
+          ? "hover:bg-gray-200 dark:hover:bg-gray-600/50"
+          : "hover:bg-yellow-100 dark:hover:bg-yellow-900/20",
+        title: task.completed
+          ? "text-gray-500 dark:text-gray-400 line-through"
+          : "text-yellow-900 dark:text-yellow-100",
+        text: task.completed
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-yellow-800/80 dark:text-yellow-200/80",
+        icon: task.completed
+          ? "text-gray-400 dark:text-gray-500"
+          : "text-yellow-600 dark:text-yellow-400",
+        badgeBg: task.completed
+          ? "bg-gray-200 dark:bg-gray-600"
+          : "bg-yellow-100 dark:bg-yellow-900/30",
+        badgeText: task.completed
+          ? "text-gray-600 dark:text-gray-400"
+          : "text-yellow-800 dark:text-yellow-200",
+        badgeBorder: task.completed
+          ? "border-gray-300 dark:border-gray-500"
+          : "border-yellow-200 dark:border-yellow-700",
+        indicator: task.completed ? "bg-gray-400" : "bg-yellow-500",
+        indicatorGlow: task.completed ? "" : "shadow-lg shadow-yellow-500/25",
+      },
+      low: {
+        cardBorder: task.completed 
+          ? "border-l-4 border-l-gray-400" 
+          : "border-l-4 border-l-green-500",
+        cardBg: task.completed
+          ? "bg-gray-100 dark:bg-gray-700/50"
+          : "bg-green-50 dark:bg-green-900/10",
+        cardHover: task.completed
+          ? "hover:bg-gray-200 dark:hover:bg-gray-600/50"
+          : "hover:bg-green-100 dark:hover:bg-green-900/20",
+        title: task.completed
+          ? "text-gray-500 dark:text-gray-400 line-through"
+          : "text-green-900 dark:text-green-100",
+        text: task.completed
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-green-800/80 dark:text-green-200/80",
+        icon: task.completed
+          ? "text-gray-400 dark:text-gray-500"
+          : "text-green-600 dark:text-green-400",
+        badgeBg: task.completed
+          ? "bg-gray-200 dark:bg-gray-600"
+          : "bg-green-100 dark:bg-green-900/30",
+        badgeText: task.completed
+          ? "text-gray-600 dark:text-gray-400"
+          : "text-green-800 dark:text-green-200",
+        badgeBorder: task.completed
+          ? "border-gray-300 dark:border-gray-500"
+          : "border-green-200 dark:border-green-700",
+        indicator: task.completed ? "bg-gray-400" : "bg-green-500",
+        indicatorGlow: task.completed ? "" : "shadow-lg shadow-green-500/25",
+      },
+    };
+
+    return themes[task.priority] || themes.medium;
+  };
+
+  /**
+   * Toggles expanded view for more details
+   */
+  const toggleExpanded = (e) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
+
+  /**
+   * Handles completion toggle with modal for new completions
+   */
+  const handleCompletionToggle = (e) => {
+    e.stopPropagation();
     
-    // Progress notification every 25%
-    const progressMilestone = Math.floor(completionPercent / 25) * 25;
-    if (progressMilestone > 0 && progressMilestone <= 100) {
-      const existingProgress = notifications.find(
-        n => n.taskId === task.id && 
-             n.type === NOTIFICATION_TYPES.PROGRESS &&
-             n.message.includes(`${progressMilestone}%`) &&
-             Date.now() - n.timestamp < 60000 // Within last minute
-      );
-
-      if (!existingProgress) {
-        addNotification({
-          id: Date.now() + Math.random(),
-          type: NOTIFICATION_TYPES.PROGRESS,
-          taskId: task.id,
-          taskTitle: task.title,
-          message: NOTIFICATION_MESSAGES.progress(task, progressMilestone),
-          timestamp: Date.now(),
-          read: false
-        });
+    if (task.completed) {
+      // If already completed, just toggle back without modal
+      if (onToggleCompletion) {
+        onToggleCompletion(task.id);
+      }
+    } else {
+      // If not completed, open completion modal
+      if (onOpenCompletionModal) {
+        onOpenCompletionModal(task);
+      } else if (onToggleCompletion) {
+        // Fallback to simple toggle if modal not available
+        onToggleCompletion(task.id);
       }
     }
-  });
+  };
+
+  /**
+   * Handles manual time addition
+   */
+  const handleAddManualTime = () => {
+    const minutes = parseInt(manualTimeInput) || 0;
+    if (minutes > 0) {
+      onAddManualTime(task.id, minutes);
+      setManualTimeInput("15");
+      setShowTimeControls(false);
+    }
+  };
+
+  const priorityTheme = getPriorityTheme();
+
+  return (
+    <div
+      className={`relative rounded-lg transition-all duration-300 cursor-pointer group overflow-hidden ${priorityTheme.cardBorder} ${priorityTheme.cardBg} ${priorityTheme.cardHover}`}
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
+      onClick={() => onViewDetails(task)}
+    >
+      {/* Priority Indicator Dot */}
+      <div
+        className={`absolute top-3 left-3 w-3 h-3 rounded-full ${priorityTheme.indicator} ${priorityTheme.indicatorGlow}`}
+      />
+
+      <div className="pl-6 pr-3 py-3">
+        {/* Header Section */}
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1 min-w-0 pr-2">
+            {/* Title and Priority */}
+            <div className="flex items-center space-x-2 mb-1">
+              {/* Completion Checkbox */}
+              <button
+                onClick={handleCompletionToggle}
+                className={`flex-shrink-0 mt-1 transition-all ${
+                  task.completed
+                    ? task.completionType === 'cancelled'
+                      ? 'text-red-500 hover:text-red-600'
+                      : task.completionType === 'partially'
+                      ? 'text-yellow-500 hover:text-yellow-600'
+                      : 'text-green-500 hover:text-green-600'
+                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400'
+                }`}
+                title={task.completed ? `Completed: ${task.completionType}` : 'Mark as complete'}
+              >
+                {task.completed ? (
+                  task.completionType === 'cancelled' ? (
+                    <X className="h-4 w-4" />
+                  ) : task.completionType === 'partially' ? (
+                    <CheckCircle className="h-4 w-4" fill="currentColor" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4" fill="currentColor" />
+                  )
+                ) : (
+                  <Circle className="h-4 w-4" />
+                )}
+              </button>
+
+              <h3
+                className={`font-semibold text-sm truncate ${priorityTheme.title}`}
+              >
+                {task.title}
+              </h3>
+
+              {/* Priority Badge */}
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${priorityTheme.badgeBg} ${priorityTheme.badgeText} ${priorityTheme.badgeBorder}`}
+              >
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+              </span>
+
+              {/* Timer Toggle Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowTimerSection(!showTimerSection);
+                }}
+                className={`flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium transition-all ${
+                  showTimerSection 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+                title={showTimerSection ? "Hide timer" : "Show timer"}
+              >
+                <Clock className="h-3 w-3" />
+                <span>{showTimerSection ? "Hide" : "Timer"}</span>
+              </button>
+            </div>
+
+            {/* Time and Day */}
+            <div className="flex items-center space-x-3 text-xs">
+              <div className="flex items-center">
+                <Clock className={`h-3 w-3 mr-1 ${priorityTheme.icon}`} />
+                <span className={priorityTheme.text}>
+                  {task.startTime} - {task.endTime}
+                </span>
+              </div>
+
+              <div className="flex items-center">
+                <Calendar className={`h-3 w-3 mr-1 ${priorityTheme.icon}`} />
+                <span className={priorityTheme.text}>{task.day}</span>
+              </div>
+
+              <span className={priorityTheme.text}>
+                {calculateDuration(task.startTime, task.endTime)}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          {showActions && (
+            <div className="flex space-x-1 flex-shrink-0">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails(task);
+                }}
+                className={`p-1.5 rounded-full transition-colors ${priorityTheme.badgeBg} hover:opacity-80`}
+                title="View details"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(task);
+                }}
+                className={`p-1.5 rounded-full transition-colors ${priorityTheme.badgeBg} hover:opacity-80`}
+                title="Edit task"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(task.id);
+                }}
+                className={`p-1.5 rounded-full transition-colors bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:opacity-80`}
+                title="Delete task"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Remarks Display */}
+        {task.remarks && (
+          <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
+            <div className="flex items-start space-x-2">
+              <MessageCircle className="h-3 w-3 mt-0.5 text-blue-500 flex-shrink-0" />
+              <span className="text-blue-700 dark:text-blue-300">{task.remarks}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Description - Always visible if available */}
+        {task.description && (
+          <p className={`text-xs mb-2 leading-relaxed ${priorityTheme.text}`}>
+            {task.description}
+          </p>
+        )}
+
+        {/* ... rest of your existing TaskItem code ... */}
+        {/* (Keep all the existing expandable details, timer section, etc.) */}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Calculates duration between two times
+ */
+const calculateDuration = (startTime, endTime) => {
+  const [startHours, startMinutes] = startTime.split(":").map(Number);
+  const [endHours, endMinutes] = endTime.split(":").map(Number);
+
+  const startTotal = startHours * 60 + startMinutes;
+  const endTotal = endHours * 60 + endMinutes;
+  const duration = endTotal - startTotal;
+
+  if (duration <= 0) return "0m";
+
+  const hours = Math.floor(duration / 60);
+  const minutes = duration % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
 };
 
-// Add this to your existing interval check
-useEffect(() => {
-  const interval = setInterval(() => {
-    checkUpcomingTasks();
-    checkProgressNotifications(); // ADD THIS LINE
-    
-    // Send daily summary at 8 AM
-    const now = new Date();
-    if (now.getHours() === 8 && now.getMinutes() === 0) {
-      sendDailySummary();
-    }
-  }, 60000); // 1 minute
-  
-  checkUpcomingTasks();
-  checkProgressNotifications(); // Initial check
-  
-  return () => clearInterval(interval);
-}, [tasks, settings, notifications.length]);
+export default TaskItem;

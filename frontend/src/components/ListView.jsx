@@ -8,7 +8,11 @@ const ListView = ({
   onEditTask, 
   onDeleteTask, 
   isDarkMode,
-  onToggleTracking 
+  onToggleTracking,
+  onToggleCompletion,        // This should exist
+  onOpenCompletionModal 
+  
+
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all'); // all, completed, pending
@@ -36,12 +40,25 @@ const ListView = ({
           return a.startTime.localeCompare(b.startTime);
       }
     });
-
+     // Update the completion handler in ListView
   const toggleTaskCompletion = (taskId, e) => {
     e.stopPropagation();
-    // You'll need to implement this in your App.jsx
-    console.log('Toggle completion for:', taskId);
+    
+    const task = tasks.find(t => t.id === taskId);
+    if (task && !task.completed) {
+      // Open completion modal for incomplete tasks
+      if (onOpenCompletionModal) {
+        onOpenCompletionModal(task);
+      }
+    } else {
+      // Simple toggle for completed tasks
+      if (onToggleCompletion) {
+        onToggleCompletion(taskId);
+      }
+    }
   };
+
+  
 
   return (
     <div className={`rounded-xl border p-6 ${
