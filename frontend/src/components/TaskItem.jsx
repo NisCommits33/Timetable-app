@@ -19,6 +19,7 @@ import {
   Circle,
   CheckCircle,
   MessageCircle,
+  Target
 } from "lucide-react";
 import { formatTime, formatTimeShort } from "../hooks/useTimeTracking";
 
@@ -79,8 +80,8 @@ function TaskItem({
   const getPriorityTheme = () => {
     const themes = {
       high: {
-        cardBorder: task.completed 
-          ? "border-l-4 border-l-gray-400" 
+        cardBorder: task.completed
+          ? "border-l-4 border-l-gray-400"
           : "border-l-4 border-l-red-500",
         cardBg: task.completed
           ? "bg-gray-100 dark:bg-gray-700/50"
@@ -110,8 +111,8 @@ function TaskItem({
         indicatorGlow: task.completed ? "" : "shadow-lg shadow-red-500/25",
       },
       medium: {
-        cardBorder: task.completed 
-          ? "border-l-4 border-l-gray-400" 
+        cardBorder: task.completed
+          ? "border-l-4 border-l-gray-400"
           : "border-l-4 border-l-yellow-500",
         cardBg: task.completed
           ? "bg-gray-100 dark:bg-gray-700/50"
@@ -141,8 +142,8 @@ function TaskItem({
         indicatorGlow: task.completed ? "" : "shadow-lg shadow-yellow-500/25",
       },
       low: {
-        cardBorder: task.completed 
-          ? "border-l-4 border-l-gray-400" 
+        cardBorder: task.completed
+          ? "border-l-4 border-l-gray-400"
           : "border-l-4 border-l-green-500",
         cardBg: task.completed
           ? "bg-gray-100 dark:bg-gray-700/50"
@@ -196,12 +197,12 @@ function TaskItem({
       setShowTimeControls(false);
     }
   };
-   /**
+  /**
    * Handles completion toggle with modal for new completions
    */
   const handleCompletionToggle = (e) => {
     e.stopPropagation();
-    
+
     if (task.completed) {
       // If already completed, just toggle back without modal
       if (onToggleCompletion) {
@@ -235,7 +236,7 @@ function TaskItem({
           <div className="flex-1 min-w-0 pr-2">
             {/* Title and Priority */}
             <div className="flex items-center space-x-2 mb-1">
-                            {/* // Update the completion checkbox to show different states */}
+              {/* // Update the completion checkbox to show different states */}
               <button
                 onClick={handleCompletionToggle}
                 className={`flex-shrink-0 mt-1 transition-all ${
@@ -294,11 +295,6 @@ function TaskItem({
                 <Clock className="h-3 w-3" />
                 <span>{showTimerSection ? "Hide" : "Timer"}</span>
               </button>
-
-
-              
-              
-
             </div>
 
             {/* Time and Day */}
@@ -356,10 +352,27 @@ function TaskItem({
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
+              {/* Add Focus Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // This would need to be passed down from App.jsx
+                  if (onStartFocus) {
+                    onStartFocus(task);
+                  }
+                }}
+                className={`p-1.5 rounded-full transition-colors ${
+                  isDarkMode
+                    ? "bg-orange-900/30 text-orange-400 hover:bg-orange-800/30"
+                    : "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                }`}
+                title="Start focus session"
+              >
+                <Target className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
         </div>
-        
 
         {/* Description - Always visible if available */}
         {task.description && (
@@ -500,16 +513,16 @@ function TaskItem({
           %
         </div> */}
         {/* // Add remarks display if task has remarks */}
-              {task.remarks && (
-                <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
-                  <div className="flex items-start space-x-2">
-                    <MessageCircle className="h-3 w-3 mt-0.5 text-blue-500 flex-shrink-0" />
-                    <span className="text-blue-700 dark:text-blue-300">
-                      {task.remarks}
-                    </span>
-                  </div>
-                </div>
-              )}
+        {task.remarks && (
+          <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
+            <div className="flex items-start space-x-2">
+              <MessageCircle className="h-3 w-3 mt-0.5 text-blue-500 flex-shrink-0" />
+              <span className="text-blue-700 dark:text-blue-300">
+                {task.remarks}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* TIMER SECTION - CONDITIONAL RENDERING */}
         {showTimerSection && (

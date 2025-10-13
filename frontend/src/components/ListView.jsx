@@ -1,6 +1,6 @@
 // components/ListView.jsx
 import { useState } from 'react';
-import { Search, Filter, SortAsc, CheckCircle, Circle, Clock, AlertCircle } from 'lucide-react';
+import { Search, Filter, SortAsc, CheckCircle, Circle, Clock, AlertCircle,Square } from 'lucide-react';
 
 const ListView = ({ 
   tasks, 
