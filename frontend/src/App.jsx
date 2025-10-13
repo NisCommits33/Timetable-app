@@ -8,11 +8,13 @@ import { useTimeTracking } from "./hooks/useTimeTracking";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import NotificationCenter from "./components/NotificationCenter";
 import { SnackbarProvider } from "../src/contexts/SnackbarContext";
-import Snackbar from "./components/Snackbar";
+import { useSnackbar } from "./contexts/SnackbarContext";
 import ViewSwitcher from "./components/ViewSwitcher";
 import DayView from "./components/DayView";
 import ListView from "./components/ListView";
 import CompletionModal from "./components/CompletionModal";
+import FocusTimer from "./components/FocusTimer";
+import { Target } from "lucide-react";
 
 // ... your initialTasks array remains the same ...
 // In App.jsx - Update your initialTasks array
@@ -236,6 +238,8 @@ function App() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Controls edit modal visibility
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState("week"); // 'week', 'day', 'list', 'board', 'timeline'
+  const [showFocusTimer, setShowFocusTimer] = useState(false);
+  const [focusTask, setFocusTask] = useState(null);
 
   // Initialize time tracking
   const {
@@ -413,7 +417,7 @@ function App() {
       timeTracking: task.timeTracking,
     }))
   );
-    const [completionModal, setCompletionModal] = useState({
+  const [completionModal, setCompletionModal] = useState({
     isOpen: false,
     task: null,
   });
@@ -475,6 +479,29 @@ function App() {
       );
     }
   };
+  // Add this function for timer completion
+  const handleTimerComplete = (mode, sessionsCompleted) => {
+    // Show notification based on timer completion
+    const message =
+      mode === "focus"
+        ? `Focus session complete! ${
+            sessionsCompleted === 4
+              ? "Time for a long break!"
+              : "Take a short break."
+          }`
+        : "Break over! Ready to focus again?";
+
+    showSnackbar(message, {
+      type: "success",
+      duration: 5000,
+    });
+
+    // If it was a focus session and we have a task, auto-complete if appropriate
+    if (mode === "focus" && focusTask) {
+      // You could auto-complete the task or add time to it
+      console.log("Focus session completed for task:", focusTask.title);
+    }
+  };
   return (
     <NotificationProvider tasks={tasks}>
       <SnackbarProvider>
@@ -518,6 +545,20 @@ function App() {
                       <Moon className="h-5 w-5" />
                     )}
                   </button>
+                  {/* Update the Focus Timer toggle button in header */}
+                  <button
+                    onClick={() => setShowFocusTimer(!showFocusTimer)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDarkMode
+                        ? "hover:bg-gray-700 text-gray-300"
+                        : "hover:bg-gray-200 text-gray-600"
+                    } ${showFocusTimer ? "bg-blue-500 text-white" : ""}`} // Highlight when active
+                    title={
+                      showFocusTimer ? "Hide Focus Timer" : "Show Focus Timer"
+                    }
+                  >
+                    <Target className="h-5 w-5" />
+                  </button>
 
                   {/* New Task Button */}
                   <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200">
@@ -539,20 +580,30 @@ function App() {
           </header>
           {/* Main Content Area */}
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Sidebar - Add Task Form */}
-              <div className="lg:col-span-1">
-                <div
-                  className={`p-5 rounded-xl border transition-colors duration-200 sticky top-1 ${
-                    isDarkMode
-                      ? "border-gray-700 bg-gray-800"
-                      : "border-gray-200 bg-white"
-                  }`}
-                >
-                  <h2 className="text-lg font-semibold mb-4">Add New Task</h2>
-                  <AddTaskForm onAddTask={addTask} isDarkMode={isDarkMode} />
-                </div>
-              </div>
+         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+  {/* Sidebar */}
+  <div className="lg:col-span-1 space-y-6 relative"> {/* Add relative positioning */}
+    
+    {/* Add Task Form */}
+    <div className={`p-5 rounded-xl border transition-colors duration-200 ${
+      isDarkMode
+        ? "border-gray-700 bg-gray-800"
+        : "border-gray-200 bg-white"
+    }`}>
+      <h2 className="text-lg font-semibold mb-4">Add New Task</h2>
+      <AddTaskForm onAddTask={addTask} isDarkMode={isDarkMode} />
+    </div>
+
+    {/* Focus Timer - FIXED POSITIONING */}
+    {showFocusTimer && (
+      <div className="sticky top-4" style={{ zIndex: 20 }}> {/* Add sticky and z-index */}
+        <FocusTimer 
+          isDarkMode={isDarkMode} 
+          onClose={() => setShowFocusTimer(false)} // Add close functionality
+        />
+      </div>
+    )}
+  </div>
 
               {/* Main Content - Week View */}
               <div className="lg:col-span-3">
@@ -593,6 +644,10 @@ function App() {
                         onOpenCompletionModal={(task) =>
                           setCompletionModal({ isOpen: true, task: task })
                         }
+                        onStartFocus={(task) => {
+                          setFocusTask(task);
+                          setShowFocusTimer(true);
+                        }}
                       />
                     )}
 
@@ -611,6 +666,10 @@ function App() {
                         onOpenCompletionModal={(task) =>
                           setCompletionModal({ isOpen: true, task: task })
                         }
+                        onStartFocus={(task) => {
+                          setFocusTask(task);
+                          setShowFocusTimer(true);
+                        }}
                       />
                     )}
 
@@ -626,6 +685,10 @@ function App() {
                         onOpenCompletionModal={(task) =>
                           setCompletionModal({ isOpen: true, task: task })
                         }
+                        onStartFocus={(task) => {
+                          setFocusTask(task);
+                          setShowFocusTimer(true);
+                        }}
                       />
                     )}
 
@@ -660,7 +723,7 @@ function App() {
             }}
             isDarkMode={isDarkMode}
           />
-          {/* Completion Modal */}4
+          {/* Completion Modal */}
           <CompletionModal
             isOpen={completionModal.isOpen}
             onClose={() => setCompletionModal({ isOpen: false, task: null })}
@@ -819,7 +882,7 @@ function App() {
               </div>
             </div>
           )}
-          <Snackbar />
+          {/* <Snackbar /> */}
         </div>
       </SnackbarProvider>
     </NotificationProvider>
