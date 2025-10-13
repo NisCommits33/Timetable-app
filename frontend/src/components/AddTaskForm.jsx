@@ -4,14 +4,12 @@ import {
   Plus,
   Clock,
   MapPin,
-  AlertCircle,
   FileText,
   Tag,
   ChevronDown,
   ChevronUp,
   X,
   Check,
-  Minus,
   Settings,
 } from "lucide-react";
 
@@ -50,7 +48,9 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
 
   // Refs
   const tagInputRef = useRef(null);
-  const suggestionsRef = useRef(null);
+  const timeDropdownRef = useRef(null);
+  const priorityDropdownRef = useRef(null);
+  const tagSuggestionsRef = useRef(null);
 
   // Predefined time slots for quick selection
   const timeSlots = [
@@ -140,6 +140,27 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
       setIsExpanded(false);
     }
   };
+  /**
+ * Calculates duration between two times
+ */
+const calculateDuration = (startTime, endTime) => {
+  const [startHours, startMinutes] = startTime.split(":").map(Number);
+  const [endHours, endMinutes] = endTime.split(":").map(Number);
+
+  const startTotal = startHours * 60 + startMinutes;
+  const endTotal = endHours * 60 + endMinutes;
+  const duration = endTotal - startTotal;
+
+  if (duration <= 0) return "0m";
+
+  const hours = Math.floor(duration / 60);
+  const minutes = duration % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+};
 
   /**
    * Quick add with minimal fields
@@ -254,28 +275,6 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
         .padStart(2, "0")}`
     );
   };
-  
-/**
- * Calculates duration between two times
- */
-const calculateDuration = (startTime, endTime) => {
-  const [startHours, startMinutes] = startTime.split(":").map(Number);
-  const [endHours, endMinutes] = endTime.split(":").map(Number);
-
-  const startTotal = startHours * 60 + startMinutes;
-  const endTotal = endHours * 60 + endMinutes;
-  const duration = endTotal - startTotal;
-
-  if (duration <= 0) return "0m";
-
-  const hours = Math.floor(duration / 60);
-  const minutes = duration % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
-};
 
   /**
    * Gets current priority option
@@ -287,16 +286,22 @@ const calculateDuration = (startTime, endTime) => {
     );
   };
 
-  // Close suggestions when clicking outside
+  // Close dropdowns when clicking outside - FIXED VERSION
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(event.target)
-      ) {
-        setIsTagSuggestionsOpen(false);
-        setIsPriorityExpanded(false);
+      // Close time dropdown
+      if (timeDropdownRef.current && !timeDropdownRef.current.contains(event.target)) {
         setIsTimeExpanded(false);
+      }
+      
+      // Close priority dropdown
+      if (priorityDropdownRef.current && !priorityDropdownRef.current.contains(event.target)) {
+        setIsPriorityExpanded(false);
+      }
+      
+      // Close tag suggestions
+      if (tagSuggestionsRef.current && !tagSuggestionsRef.current.contains(event.target)) {
+        setIsTagSuggestionsOpen(false);
       }
     };
 
@@ -458,8 +463,8 @@ const calculateDuration = (startTime, endTime) => {
               />
             </div>
 
-            {/* Enhanced Time Selection */}
-            <div>
+            {/* Enhanced Time Selection - FIXED */}
+            <div ref={timeDropdownRef}>
               <label
                 className={`block text-sm font-medium mb-2 ${
                   isDarkMode ? "text-gray-300" : "text-gray-700"
@@ -468,7 +473,7 @@ const calculateDuration = (startTime, endTime) => {
                 Time *
               </label>
 
-              <div className="mb-3">
+              <div className="relative">
                 <button
                   type="button"
                   onClick={() => setIsTimeExpanded(!isTimeExpanded)}
@@ -491,7 +496,7 @@ const calculateDuration = (startTime, endTime) => {
 
                 {/* Expanded Time Picker */}
                 {isTimeExpanded && (
-                  <div className="mt-2 p-3 rounded-lg border animate-fadeIn">
+                  <div className="absolute z-20 w-full mt-1 p-3 rounded-lg border shadow-lg animate-fadeIn bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div>
                         <label
@@ -504,10 +509,22 @@ const calculateDuration = (startTime, endTime) => {
                         <input
                           type="time"
                           value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
+                          onChange={(e) => {
+                            setStartTime(e.target.value);
+                            // Auto-adjust end time to maintain 1-hour duration
+                            const [hours, minutes] = e.target.value.split(":").map(Number);
+                            const totalMinutes = hours * 60 + minutes + 60;
+                            const endHours = Math.floor(totalMinutes / 60);
+                            const endMinutes = totalMinutes % 60;
+                            setEndTime(
+                              `${endHours.toString().padStart(2, "0")}:${endMinutes
+                                .toString()
+                                .padStart(2, "0")}`
+                            );
+                          }}
                           className={`w-full px-2 py-1 text-sm rounded border ${
                             isDarkMode
-                              ? "border-gray-600 bg-gray-800 text-white"
+                              ? "border-gray-600 bg-gray-700 text-white"
                               : "border-gray-300 bg-gray-50 text-gray-900"
                           }`}
                         />
@@ -526,7 +543,7 @@ const calculateDuration = (startTime, endTime) => {
                           onChange={(e) => setEndTime(e.target.value)}
                           className={`w-full px-2 py-1 text-sm rounded border ${
                             isDarkMode
-                              ? "border-gray-600 bg-gray-800 text-white"
+                              ? "border-gray-600 bg-gray-700 text-white"
                               : "border-gray-300 bg-gray-50 text-gray-900"
                           }`}
                         />
@@ -542,12 +559,15 @@ const calculateDuration = (startTime, endTime) => {
                       >
                         Quick Select (1-hour slots):
                       </label>
-                      <div className="grid grid-cols-4 gap-1 max-h-32 overflow-y-auto">
+                      <div className="grid grid-cols-3 gap-1 max-h-32 overflow-y-auto">
                         {timeSlots.map((slot) => (
                           <button
                             key={slot}
                             type="button"
-                            onClick={() => setTimeWithDuration(slot)}
+                            onClick={() => {
+                              setTimeWithDuration(slot);
+                              setIsTimeExpanded(false);
+                            }}
                             className={`p-1 text-xs rounded transition-colors ${
                               startTime === slot
                                 ? "bg-blue-600 text-white"
@@ -594,8 +614,8 @@ const calculateDuration = (startTime, endTime) => {
               </select>
             </div>
 
-            {/* Enhanced Priority Selection */}
-            <div>
+            {/* Enhanced Priority Selection - FIXED */}
+            <div ref={priorityDropdownRef}>
               <label
                 className={`block text-sm font-medium mb-2 ${
                   isDarkMode ? "text-gray-300" : "text-gray-700"
@@ -604,7 +624,7 @@ const calculateDuration = (startTime, endTime) => {
                 Priority
               </label>
 
-              <div className="relative" ref={suggestionsRef}>
+              <div className="relative">
                 <button
                   type="button"
                   onClick={() => setIsPriorityExpanded(!isPriorityExpanded)}
@@ -627,13 +647,7 @@ const calculateDuration = (startTime, endTime) => {
 
                 {/* Priority Options Dropdown */}
                 {isPriorityExpanded && (
-                  <div
-                    className={`absolute z-10 w-full mt-1 rounded-lg border shadow-lg animate-fadeIn ${
-                      isDarkMode
-                        ? "border-gray-600 bg-gray-800"
-                        : "border-gray-300 bg-white"
-                    }`}
-                  >
+                  <div className="absolute z-20 w-full mt-1 rounded-lg border shadow-lg animate-fadeIn bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                     {priorityOptions.map((option) => (
                       <button
                         key={option.value}
@@ -694,7 +708,7 @@ const calculateDuration = (startTime, endTime) => {
             </div>
 
             {/* Enhanced Tag System */}
-            <div>
+            <div ref={tagSuggestionsRef}>
               <label
                 className={`block text-sm font-medium mb-2 ${
                   isDarkMode ? "text-gray-300" : "text-gray-700"
@@ -703,7 +717,7 @@ const calculateDuration = (startTime, endTime) => {
                 Tags
               </label>
 
-              <div className="relative" ref={suggestionsRef}>
+              <div className="relative">
                 {/* Tag Input Container */}
                 <div
                   className={`flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border transition-colors duration-200 ${
@@ -755,7 +769,7 @@ const calculateDuration = (startTime, endTime) => {
                 {/* Tag Suggestions */}
                 {isTagSuggestionsOpen && (
                   <div
-                    className={`absolute z-10 w-full mt-1 rounded-lg border shadow-lg animate-fadeIn ${
+                    className={`absolute z-20 w-full mt-1 rounded-lg border shadow-lg animate-fadeIn ${
                       isDarkMode
                         ? "border-gray-600 bg-gray-800"
                         : "border-gray-300 bg-white"
@@ -858,6 +872,7 @@ const calculateDuration = (startTime, endTime) => {
     </div>
   );
 }
+
 
 
 export default AddTaskForm;
