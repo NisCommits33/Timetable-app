@@ -1,5 +1,5 @@
 // components/ViewSwitcher.jsx
-import { Calendar, List, Clock, Grid, BarChart3 } from 'lucide-react';
+import { Calendar, List, Clock, Grid, BarChart3, TrendingUp } from 'lucide-react';
 
 const ViewSwitcher = ({ currentView, onViewChange, isDarkMode }) => {
   const views = [
@@ -7,7 +7,8 @@ const ViewSwitcher = ({ currentView, onViewChange, isDarkMode }) => {
     { id: 'day', name: 'Day View', icon: Clock, description: 'Detailed daily schedule' },
     { id: 'list', name: 'List View', icon: List, description: 'Simple task checklist' },
     { id: 'board', name: 'Board View', icon: Grid, description: 'Kanban-style columns' },
-    { id: 'timeline', name: 'Timeline', icon: BarChart3, description: 'Gantt-style timeline' }
+    { id: 'timeline', name: 'Timeline', icon: BarChart3, description: 'Gantt-style timeline' },
+    { id: 'analytics', name: 'Analytics', icon: TrendingUp, description: 'Task statistics and insights' }
   ];
 
   return (

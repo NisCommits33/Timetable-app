@@ -14,6 +14,7 @@ import NotificationCenter from "./components/NotificationCenter";
 import ViewSwitcher from "./components/ViewSwitcher";
 import EditTaskModal from "./components/EditTaskModal";
 import Snackbar from "./components/Snackbar";
+import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
 // Contexts
 import { NotificationProvider } from "./contexts/NotificationContext";
@@ -481,6 +482,13 @@ function AppContent() {
                     <div className="text-center py-12 text-gray-500">
                       Timeline View - Coming Soon!
                     </div>
+                  )}
+
+                  {currentView === "analytics" && (
+                    <AnalyticsDashboard
+                      tasks={tasks}
+                      isDarkMode={isDarkMode}
+                    />
                   )}
                 </div>
               </div>
