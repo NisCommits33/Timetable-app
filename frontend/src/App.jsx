@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 // Layouts & Pages
 import MainLayout from "./layouts/MainLayout";
 import DashboardPage from "./pages/DashboardPage";
+import HabitsPage from "./pages/HabitsPage";
 import SchedulePage from "./pages/SchedulePage";
 import FeaturesPage from "./pages/FeaturesPage";
 
@@ -207,6 +208,8 @@ function AppContent() {
                 onAddTaskClick={() => openAddTaskModal()}
               />
             } />
+
+            <Route path="/habits" element={<HabitsPage isDarkMode={isDarkMode} />} />
 
             {/* Schedule hosts the task views */}
             <Route path="/schedule/*" element={

@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Sun, Moon, Target, LayoutDashboard, Sparkles, Clock } from 'lucide-react';
+import { Calendar, Sun, Moon, Target, LayoutDashboard, Sparkles, Clock, Flame } from 'lucide-react';
 import NotificationCenter from '../features/notifications/components/NotificationCenter';
 
 const Navbar = ({ isDarkMode, toggleDarkMode, showFocusTimer, setShowFocusTimer }) => {
@@ -33,6 +33,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode, showFocusTimer, setShowFocusTimer 
                             {[
                                 { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
                                 { to: '/schedule', label: 'Schedule', icon: Clock },
+                                { to: '/habits', label: 'Habits', icon: Flame },
                                 { to: '/features', label: 'Features', icon: Sparkles },
                             ].map((link) => (
                                 <NavLink
