@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
-import { useSnackbar } from '../contexts/SnackbarContext';
+import { useSnackbar } from '../../providers/SnackbarProvider';
 
 const Snackbar = () => {
   const { snackbars, removeSnackbar } = useSnackbar();
@@ -22,7 +22,7 @@ const Snackbar = () => {
 
   const getStyles = (type) => {
     const baseStyles = "flex items-center justify-between p-4 rounded-lg shadow-lg border min-w-80 max-w-md transform transition-all duration-300";
-    
+
     switch (type) {
       case 'success':
         return `${baseStyles} bg-green-50 border-green-200 text-green-800`;

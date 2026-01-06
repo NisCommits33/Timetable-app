@@ -4,8 +4,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getItem, setItem, migrateTasks } from '../utils/storageUtils';
-import { validateTaskTime, sanitizeTaskInput } from '../utils/taskValidation';
+import { getItem, setItem, migrateTasks } from '../../../utils/storageUtils';
+import { validateTaskTime, sanitizeTaskInput } from '../../../utils/taskValidation';
 
 const STORAGE_KEY = 'timetable-tasks';
 

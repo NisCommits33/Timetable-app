@@ -48,15 +48,15 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
   // Check if we're in quiet hours
   const isQuietHours = () => {
     if (!settings.quietHours.enabled) return false;
-    
+
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
     const [startHour, startMinute] = settings.quietHours.start.split(':').map(Number);
     const [endHour, endMinute] = settings.quietHours.end.split(':').map(Number);
-    
+
     const startTime = startHour * 60 + startMinute;
     const endTime = endHour * 60 + endMinute;
-    
+
     return currentTime >= startTime || currentTime < endTime;
   };
 
@@ -65,9 +65,9 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
     if (isQuietHours() && notification.type !== NOTIFICATION_TYPES.OVERDUE) {
       return; // Don't send notifications during quiet hours (except overdue)
     }
-    
+
     setNotifications(prev => [notification, ...prev].slice(0, 50));
-    
+
     // Show browser notification if enabled
     if (settings.pushEnabled && 'Notification' in window && Notification.permission === 'granted') {
       new Notification(notification.taskTitle || 'Timetable App', {
@@ -76,7 +76,7 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
         tag: notification.id
       });
     }
-    
+
     // Play sound if enabled
     if (settings.soundEnabled) {
       playNotificationSound();
@@ -86,24 +86,24 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
   // Simple notification sound using Web Audio API
   const playNotificationSound = () => {
     if (!settings.soundEnabled) return;
-    
+
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       oscillator.frequency.value = 800;
       oscillator.type = 'sine';
-      
+
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
+
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.3);
-      
+
     } catch (error) {
       console.log('Audio context not supported:', error);
     }
@@ -111,8 +111,8 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
 
   // Mark notification as read
   const markAsRead = (notificationId) => {
-    setNotifications(prev => 
-      prev.map(notif => 
+    setNotifications(prev =>
+      prev.map(notif =>
         notif.id === notificationId ? { ...notif, read: true } : notif
       )
     );
@@ -140,43 +140,43 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
   };
 
   // Helper function to determine if notification should be sent based on frequency
- // Replace the shouldSendNotification function with this:
-const shouldSendNotification = (taskId, type, frequency) => {
-  const now = Date.now();
-  
-  // Get all notifications of this type for this task
-  const taskNotifications = notifications.filter(
-    n => n.taskId === taskId && n.type === type
-  );
+  // Replace the shouldSendNotification function with this:
+  const shouldSendNotification = (taskId, type, frequency) => {
+    const now = Date.now();
 
-  if (taskNotifications.length === 0) {
-    return true; // No notifications yet, send first one
-  }
+    // Get all notifications of this type for this task
+    const taskNotifications = notifications.filter(
+      n => n.taskId === taskId && n.type === type
+    );
 
-  // Get the most recent notification of this type
-  const lastNotification = taskNotifications[0]; // Notifications are sorted newest first
-  
-  switch (frequency) {
-    case 'once':
-      return false; // Only send once, already sent
-      
-    case '5min':
-      // Send every 5 minutes
-      return now - lastNotification.timestamp >= 5 * 60 * 1000;
-      
-    case '10min':
-      // Send every 10 minutes  
-      return now - lastNotification.timestamp >= 10 * 60 * 1000;
-      
-    case 'until_start':
-    case 'until_done':
-      // Send every 5 minutes for "until" modes
-      return now - lastNotification.timestamp >= 5 * 60 * 1000;
-      
-    default:
-      return true;
-  }
-};
+    if (taskNotifications.length === 0) {
+      return true; // No notifications yet, send first one
+    }
+
+    // Get the most recent notification of this type
+    const lastNotification = taskNotifications[0]; // Notifications are sorted newest first
+
+    switch (frequency) {
+      case 'once':
+        return false; // Only send once, already sent
+
+      case '5min':
+        // Send every 5 minutes
+        return now - lastNotification.timestamp >= 5 * 60 * 1000;
+
+      case '10min':
+        // Send every 10 minutes  
+        return now - lastNotification.timestamp >= 10 * 60 * 1000;
+
+      case 'until_start':
+      case 'until_done':
+        // Send every 5 minutes for "until" modes
+        return now - lastNotification.timestamp >= 5 * 60 * 1000;
+
+      default:
+        return true;
+    }
+  };
 
   // Check for upcoming tasks and create reminders
   const checkUpcomingTasks = () => {
@@ -202,16 +202,16 @@ const shouldSendNotification = (taskId, type, frequency) => {
       const taskEndTime = new Date(taskTime);
       const [endHours, endMinutes] = task.endTime.split(':').map(Number);
       taskEndTime.setHours(endHours, endMinutes, 0, 0);
-      
+
       if (now >= taskTime && now <= taskEndTime) {
         hasActiveTask = true;
       }
 
       // Count existing reminders for this task
       const taskReminders = notifications.filter(
-        n => n.taskId === task.id && 
-             (n.type === NOTIFICATION_TYPES.REMINDER || n.type === NOTIFICATION_TYPES.OVERDUE) &&
-             !n.read
+        n => n.taskId === task.id &&
+          (n.type === NOTIFICATION_TYPES.REMINDER || n.type === NOTIFICATION_TYPES.OVERDUE) &&
+          !n.read
       );
 
       // Check if we've reached max reminders
@@ -240,7 +240,7 @@ const shouldSendNotification = (taskId, type, frequency) => {
 
       // OVERDUE LOGIC
       const shouldShowOverdue = settings.showInProgressOverdue || !task.timeTracking?.isTracking;
-      
+
       if (timeDiff < -5 && timeDiff > -60 && shouldShowOverdue && !reachedMaxReminders) {
         const shouldSendOverdue = shouldSendNotification(
           task.id,
@@ -307,28 +307,26 @@ const shouldSendNotification = (taskId, type, frequency) => {
       if (!estimatedSeconds || estimatedSeconds === 0) return;
 
       const completionPercent = (timeSpentSeconds / estimatedSeconds) * 100;
-      
-      // Progress notification every 25%
-      const progressMilestone = Math.floor(completionPercent / 25) * 25;
-      if (progressMilestone > 0 && progressMilestone <= 100) {
-        const existingProgress = notifications.find(
-          n => n.taskId === task.id && 
-               n.type === NOTIFICATION_TYPES.PROGRESS &&
-               n.message?.includes(`${progressMilestone}%`) &&
-               Date.now() - n.timestamp < 60000
-        );
 
-        if (!existingProgress && progressMilestone % 25 === 0) {
-          addNotification({
-            id: Date.now() + Math.random(),
-            type: NOTIFICATION_TYPES.PROGRESS,
-            taskId: task.id,
-            taskTitle: task.title,
-            message: NOTIFICATION_MESSAGES.progress(task, progressMilestone),
-            timestamp: Date.now(),
-            read: false
-          });
-        }
+      // Progress notification every 25%
+      const milestoneKey = `${task.id}-${progressMilestone}`;
+      const hasBeenNotified = notifications.some(
+        n => n.taskId === task.id &&
+          n.type === NOTIFICATION_TYPES.PROGRESS &&
+          n.milestone === progressMilestone
+      );
+
+      if (!hasBeenNotified && progressMilestone % 25 === 0) {
+        addNotification({
+          id: Date.now() + Math.random(),
+          type: NOTIFICATION_TYPES.PROGRESS,
+          taskId: task.id,
+          taskTitle: task.title,
+          milestone: progressMilestone,
+          message: NOTIFICATION_MESSAGES.progress(task, progressMilestone),
+          timestamp: Date.now(),
+          read: false
+        });
       }
     });
   };
@@ -339,11 +337,11 @@ const shouldSendNotification = (taskId, type, frequency) => {
 
     const today = getCurrentDayName();
     const todaysTasks = tasks.filter(task => task.day === today && !task.completed);
-    
+
     if (todaysTasks.length > 0) {
       const existingSummary = notifications.find(
-        n => n.type === NOTIFICATION_TYPES.SCHEDULE && 
-             new Date(n.timestamp).toDateString() === new Date().toDateString()
+        n => n.type === NOTIFICATION_TYPES.SCHEDULE &&
+          new Date(n.timestamp).toDateString() === new Date().toDateString()
       );
 
       if (!existingSummary) {
@@ -363,19 +361,19 @@ const shouldSendNotification = (taskId, type, frequency) => {
     const interval = setInterval(() => {
       checkUpcomingTasks();
       checkProgressNotifications();
-      
+
       // Send daily summary at 8 AM
       const now = new Date();
       if (now.getHours() === 8 && now.getMinutes() === 0) {
         sendDailySummary();
       }
     }, 60000);
-    
+
     checkUpcomingTasks();
     checkProgressNotifications();
-    
+
     return () => clearInterval(interval);
-  }, [tasks, settings, notifications.length]);
+  }, [tasks, settings]);
 
   const value = {
     notifications,

@@ -1,21 +1,74 @@
-/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply antialiased text-surface-900 bg-surface-50 transition-colors duration-300;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(244, 63, 94, 0.05) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  .dark body {
+    @apply text-surface-50 bg-surface-950;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(244, 63, 94, 0.15) 0px, transparent 50%);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display tracking-tight font-bold;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/70 dark:bg-surface-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-glass rounded-2xl;
+  }
+
+  .glass-nav {
+    @apply bg-white/60 dark:bg-surface-900/40 backdrop-blur-xl border-b border-white/20 dark:border-white/10;
+  }
+
+  .premium-button {
+    @apply px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:shadow-premium-hover active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .active-nav-item {
+    @apply relative text-brand-600 dark:text-brand-400 font-semibold;
+  }
+
+  .active-nav-item::after {
+    @apply absolute -bottom-1 left-0 w-full h-0.5 bg-brand-500 rounded-full scale-x-100 transition-transform duration-300;
+    content: '';
+  }
+}
+
 /* Custom styles for 1920×1080 optimization */
 @layer components {
+
   /* Optimize for large screens */
   @media (min-width: 1920px) {
     .timetable-grid {
       grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 1.5rem;
     }
-    
+
     .day-card {
       min-height: 280px;
     }
-    
+
     .task-item {
       padding: 0.75rem;
     }
@@ -45,12 +98,14 @@
 /* Ensure good scaling on very large screens */
 @media (min-width: 1536px) {
   html {
-    font-size: 16px; /* Base font size for large screens */
+    font-size: 16px;
+    /* Base font size for large screens */
   }
 }
 
 @media (min-width: 1920px) {
   html {
-    font-size: 17px; /* Slightly larger text for Full HD */
+    font-size: 17px;
+    /* Slightly larger text for Full HD */
   }
 }
