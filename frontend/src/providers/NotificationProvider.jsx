@@ -141,91 +141,83 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
 
   // Helper function to determine if notification should be sent based on frequency
   // Replace the shouldSendNotification function with this:
-  const shouldSendNotification = (taskId, type, frequency) => {
-    const now = Date.now();
+  // Refs to hold latest state for interval
+  const stateRef = React.useRef({ tasks, notifications, settings });
 
-    // Get all notifications of this type for this task
-    const taskNotifications = notifications.filter(
-      n => n.taskId === taskId && n.type === type
-    );
+  useEffect(() => {
+    stateRef.current = { tasks, notifications, settings };
+  }, [tasks, notifications, settings]);
 
-    if (taskNotifications.length === 0) {
-      return true; // No notifications yet, send first one
-    }
+  // Check every minute for notifications
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const { tasks, notifications, settings } = stateRef.current;
 
-    // Get the most recent notification of this type
-    const lastNotification = taskNotifications[0]; // Notifications are sorted newest first
+      // Helper to access latest state inside closures
+      const currentTasks = tasks;
+      const currentNotifications = notifications;
+      const currentSettings = settings;
 
-    switch (frequency) {
-      case 'once':
-        return false; // Only send once, already sent
+      // Re-define checks to use local variables instead of closure variables
+      // (This requires passing them as arguments or moving checking logic inside this effect)
+      // A cleaner way is to make the check functions accept data as arguments.
 
-      case '5min':
-        // Send every 5 minutes
-        return now - lastNotification.timestamp >= 5 * 60 * 1000;
+      // Since refactoring the whole file to pass arguments is large, we'll invoke the logic here directly 
+      // or wrap the check functions to use the ref.
 
-      case '10min':
-        // Send every 10 minutes  
-        return now - lastNotification.timestamp >= 10 * 60 * 1000;
+      // ACTUALLY: The easiest fix is to move the check functions INSIDE the effect or 
+      // simply rely on the fact that we can call a mutable ref wrapper.
 
-      case 'until_start':
-      case 'until_done':
-        // Send every 5 minutes for "until" modes
-        return now - lastNotification.timestamp >= 5 * 60 * 1000;
+      // Let's call a stable wrapper function:
+      runChecks();
 
-      default:
-        return true;
-    }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Wrapper to run checks with latest state
+  const runChecks = () => {
+    const { tasks, notifications, settings } = stateRef.current;
+
+    checkUpcomingTasks(tasks, notifications, settings);
+    checkProgressNotifications(tasks, notifications, settings);
+    checkDailySummary(tasks, notifications, settings);
   };
 
-  // Check for upcoming tasks and create reminders
-  const checkUpcomingTasks = () => {
-    if (!settings.enabled || tasks.length === 0) return;
+  // ----------------------------------------------------
+  // LOGIC FUNCTIONS (Modified to accept arguments)
+  // ----------------------------------------------------
+
+  const checkUpcomingTasks = (tasksList, notifsList, settingsObj) => {
+    if (!settingsObj.enabled || tasksList.length === 0) return;
 
     const now = new Date();
     const today = getCurrentDayName();
-    let hasActiveTask = false;
 
-    tasks.forEach(task => {
+    tasksList.forEach(task => {
       if (task.completed) return;
-
-      // ONLY check tasks for TODAY
       if (task.day !== today) return;
 
       const taskTime = new Date();
       const [hours, minutes] = task.startTime.split(':').map(Number);
       taskTime.setHours(hours, minutes, 0, 0);
 
-      const timeDiff = (taskTime - now) / (1000 * 60); // difference in minutes
+      const timeDiff = (taskTime - now) / (1000 * 60);
 
-      // Check if task is active (within its time range)
-      const taskEndTime = new Date(taskTime);
-      const [endHours, endMinutes] = task.endTime.split(':').map(Number);
-      taskEndTime.setHours(endHours, endMinutes, 0, 0);
-
-      if (now >= taskTime && now <= taskEndTime) {
-        hasActiveTask = true;
-      }
-
-      // Count existing reminders for this task
-      const taskReminders = notifications.filter(
+      const taskReminders = notifsList.filter(
         n => n.taskId === task.id &&
           (n.type === NOTIFICATION_TYPES.REMINDER || n.type === NOTIFICATION_TYPES.OVERDUE) &&
           !n.read
       );
+      const reachedMaxReminders = taskReminders.length >= settingsObj.maxRemindersPerTask;
 
-      // Check if we've reached max reminders
-      const reachedMaxReminders = taskReminders.length >= settings.maxRemindersPerTask;
+      // Reminder Logic
+      if (timeDiff > 0 && timeDiff <= settingsObj.reminderTiming && !reachedMaxReminders) {
+        // Custom frequency check using current notifications list
+        const shouldSend = shouldSendNotification(task.id, NOTIFICATION_TYPES.REMINDER, settingsObj.reminderFrequency, notifsList);
 
-      // REMINDER LOGIC
-      if (timeDiff > 0 && timeDiff <= settings.reminderTiming && !reachedMaxReminders) {
-        const shouldSendReminder = shouldSendNotification(
-          task.id,
-          NOTIFICATION_TYPES.REMINDER,
-          settings.reminderFrequency
-        );
-
-        if (shouldSendReminder) {
+        if (shouldSend) {
           addNotification({
             id: Date.now() + Math.random(),
             type: NOTIFICATION_TYPES.REMINDER,
@@ -238,17 +230,11 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
         }
       }
 
-      // OVERDUE LOGIC
-      const shouldShowOverdue = settings.showInProgressOverdue || !task.timeTracking?.isTracking;
-
+      // Overdue Logic
+      const shouldShowOverdue = settingsObj.showInProgressOverdue || !task.timeTracking?.isTracking;
       if (timeDiff < -5 && timeDiff > -60 && shouldShowOverdue && !reachedMaxReminders) {
-        const shouldSendOverdue = shouldSendNotification(
-          task.id,
-          NOTIFICATION_TYPES.OVERDUE,
-          settings.overdueFrequency
-        );
-
-        if (shouldSendOverdue) {
+        const shouldSend = shouldSendNotification(task.id, NOTIFICATION_TYPES.OVERDUE, settingsObj.overdueFrequency, notifsList);
+        if (shouldSend) {
           addNotification({
             id: Date.now() + Math.random(),
             type: NOTIFICATION_TYPES.OVERDUE,
@@ -261,64 +247,32 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
         }
       }
     });
-
-    // Break reminder (every 50 minutes of continuous work)
-    if (settings.breakReminders && hasActiveTask) {
-      const lastBreakNotification = notifications.find(
-        n => n.type === NOTIFICATION_TYPES.BREAK && Date.now() - n.timestamp < 50 * 60 * 1000
-      );
-
-      if (!lastBreakNotification) {
-        const activeTasks = tasks.filter(task => {
-          if (task.completed) return false;
-          const taskTime = new Date();
-          const [hours, minutes] = task.startTime.split(':').map(Number);
-          taskTime.setHours(hours, minutes, 0, 0);
-          const taskEndTime = new Date(taskTime);
-          const [endHours, endMinutes] = task.endTime.split(':').map(Number);
-          taskEndTime.setHours(endHours, endMinutes, 0, 0);
-          return now >= taskTime && now <= taskEndTime;
-        });
-
-        if (activeTasks.length > 0) {
-          addNotification({
-            id: Date.now() + Math.random(),
-            type: NOTIFICATION_TYPES.BREAK,
-            message: NOTIFICATION_MESSAGES.break(),
-            timestamp: Date.now(),
-            read: false
-          });
-        }
-      }
-    }
   };
 
-  // Check for progress notifications during active time tracking
-  const checkProgressNotifications = () => {
-    if (!settings.enabled || tasks.length === 0) return;
+  const checkProgressNotifications = (tasksList, notifsList, settingsObj) => {
+    if (!settingsObj.enabled || tasksList.length === 0) return;
 
-    tasks.forEach(task => {
+    tasksList.forEach(task => {
       if (task.completed || !task.timeTracking?.isTracking) return;
 
-      const timeSpent = calculateCurrentTimeSpent(task.timeTracking);
+      const timeSpent = calculateCurrentTimeSpent(task.timeTracking); // This function is safe
       const timeSpentSeconds = Math.floor(timeSpent / 1000);
       const estimatedSeconds = task.estimatedDuration;
 
-      if (!estimatedSeconds || estimatedSeconds === 0) return;
+      if (!estimatedSeconds) return;
 
       const completionPercent = (timeSpentSeconds / estimatedSeconds) * 100;
+      const progressMilestone = Math.floor(completionPercent / 25) * 25;
 
-      // Progress notification every 25%
-      const milestoneKey = `${task.id}-${progressMilestone}`;
-      const hasBeenNotified = notifications.some(
-        n => n.taskId === task.id &&
-          n.type === NOTIFICATION_TYPES.PROGRESS &&
-          n.milestone === progressMilestone
+      if (progressMilestone === 0) return;
+
+      const hasBeenNotified = notifsList.some(
+        n => n.taskId === task.id && n.type === NOTIFICATION_TYPES.PROGRESS && n.milestone === progressMilestone
       );
 
       if (!hasBeenNotified && progressMilestone % 25 === 0) {
         addNotification({
-          id: Date.now() + Math.random(),
+          id: Date.now(),
           type: NOTIFICATION_TYPES.PROGRESS,
           taskId: task.id,
           taskTitle: task.title,
@@ -331,49 +285,50 @@ export const NotificationProvider = ({ children, tasks = [] }) => {
     });
   };
 
-  // Send daily schedule summary
-  const sendDailySummary = () => {
-    if (!settings.dailySummary) return;
+  const checkDailySummary = (tasksList, notifsList, settingsObj) => {
+    if (!settingsObj.dailySummary) return;
 
-    const today = getCurrentDayName();
-    const todaysTasks = tasks.filter(task => task.day === today && !task.completed);
-
-    if (todaysTasks.length > 0) {
-      const existingSummary = notifications.find(
+    const now = new Date();
+    // Check if it's after 8 AM and before 10 PM
+    if (now.getHours() >= 8 && now.getHours() < 22) {
+      const today = getCurrentDayName();
+      // Check if we already sent a summary today
+      const alreadySent = notifsList.some(
         n => n.type === NOTIFICATION_TYPES.SCHEDULE &&
-          new Date(n.timestamp).toDateString() === new Date().toDateString()
+          new Date(n.timestamp).toDateString() === now.toDateString()
       );
 
-      if (!existingSummary) {
-        addNotification({
-          id: Date.now() + Math.random(),
-          type: NOTIFICATION_TYPES.SCHEDULE,
-          message: NOTIFICATION_MESSAGES.schedule(todaysTasks.length),
-          timestamp: Date.now(),
-          read: false
-        });
+      if (!alreadySent) {
+        const todaysTasks = tasksList.filter(t => t.day === today && !t.completed);
+        if (todaysTasks.length > 0) {
+          addNotification({
+            id: Date.now(),
+            type: NOTIFICATION_TYPES.SCHEDULE,
+            message: NOTIFICATION_MESSAGES.schedule(todaysTasks.length),
+            timestamp: Date.now(),
+            read: false
+          });
+        }
       }
     }
   };
 
-  // Check every minute for notifications
-  useEffect(() => {
-    const interval = setInterval(() => {
-      checkUpcomingTasks();
-      checkProgressNotifications();
+  // Helper for frequency (needs list passed in)
+  const shouldSendNotification = (taskId, type, frequency, currentNotifs) => {
+    const now = Date.now();
+    const taskNotifs = currentNotifs.filter(n => n.taskId === taskId && n.type === type);
 
-      // Send daily summary at 8 AM
-      const now = new Date();
-      if (now.getHours() === 8 && now.getMinutes() === 0) {
-        sendDailySummary();
-      }
-    }, 60000);
+    if (taskNotifs.length === 0) return true;
 
-    checkUpcomingTasks();
-    checkProgressNotifications();
+    const lastNotif = taskNotifs[0]; // Assuming newest first
+    const diff = now - lastNotif.timestamp;
 
-    return () => clearInterval(interval);
-  }, [tasks, settings]);
+    if (frequency === 'once') return false;
+    if (frequency === '5min' && diff >= 5 * 60000) return true;
+    if (frequency === '10min' && diff >= 10 * 60000) return true;
+
+    return false;
+  };
 
   const value = {
     notifications,

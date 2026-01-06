@@ -118,6 +118,7 @@ export default function WeekView({
             'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7'
         }`}>
         {orderedDays.map((dayName, index) => {
+          const isToday = dayName === days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
           const tasksForToday = tasks.filter(task => task.day === dayName);
           const isSelected = dayName === selectedDay;
 
@@ -128,19 +129,28 @@ export default function WeekView({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               onClick={() => onDayClick(dayName)}
-              className={`flex flex-col h-full min-h-[400px] rounded-2xl border transition-all duration-300 group cursor-pointer ${isSelected
-                ? 'bg-blue-500/5 border-blue-500/30 ring-1 ring-blue-500/20 shadow-lg shadow-blue-500/10'
-                : 'bg-surface-50/50 dark:bg-surface-900/50 border-black/5 dark:border-white/5 hover:border-brand-500/30 hover:bg-white dark:hover:bg-surface-800'
+              className={`flex flex-col h-full min-h-[400px] rounded-2xl border-2 transition-all duration-300 group cursor-pointer ${isToday
+                ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-500 shadow-lg shadow-purple-500/10 scale-[1.02]'
+                : isSelected
+                  ? 'bg-blue-500/5 border-blue-500/30 ring-1 ring-blue-500/20 shadow-lg shadow-blue-500/10'
+                  : 'bg-surface-50/50 dark:bg-surface-900/50 border-black/5 dark:border-white/5 hover:border-brand-500/30 hover:bg-white dark:hover:bg-surface-800'
                 }`}
             >
               {/* Day Header */}
-              <div className="p-4 flex items-center justify-between border-b border-black/5 dark:border-white/5">
+              <div className={`p-4 flex items-center justify-between border-b ${isToday ? 'border-purple-500/20' : 'border-black/5 dark:border-white/5'}`}>
                 <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-blue-500 text-white' : 'bg-surface-200 dark:bg-surface-700 text-surface-500'} transition-colors`}>
+                  <div className={`p-1.5 rounded-lg ${isToday ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20' :
+                    isSelected ? 'bg-blue-500 text-white' :
+                      'bg-surface-200 dark:bg-surface-700 text-surface-500'
+                    } transition-colors`}>
                     <Calendar size={14} />
                   </div>
-                  <h3 className={`text-sm font-black uppercase tracking-widest ${isSelected ? 'text-surface-900 dark:text-white' : 'text-surface-500 dark:text-surface-400 font-bold'}`}>
+                  <h3 className={`text-sm font-black uppercase tracking-widest ${isToday ? 'text-purple-600 dark:text-purple-400' :
+                    isSelected ? 'text-surface-900 dark:text-white' :
+                      'text-surface-500 dark:text-surface-400 font-bold'
+                    }`}>
                     {dayName.slice(0, 3)}
+                    {isToday && <span className="ml-2 text-[8px] bg-purple-500/10 text-purple-600 px-1.5 py-0.5 rounded-full">TODAY</span>}
                   </h3>
                 </div>
 

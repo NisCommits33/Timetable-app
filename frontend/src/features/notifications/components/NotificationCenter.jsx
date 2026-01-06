@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell, X, Clock, AlertCircle, CheckCircle, Calendar, Settings, Check,
@@ -70,175 +71,177 @@ const NotificationCenter = ({ isDarkMode }) => {
         )}
       </button>
 
-      {/* Drawer Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <motion.div
-              initial="closed"
-              animate="open"
-              exit="closed"
-              variants={overlayVariants}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[60] bg-black/20 dark:bg-black/50 backdrop-blur-sm"
-              onClick={() => setIsOpen(false)}
-            />
+      {/* Drawer Overlay - Rendered in Portal */}
+      {createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              <motion.div
+                initial="closed"
+                animate="open"
+                exit="closed"
+                variants={overlayVariants}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[100] bg-black/20 dark:bg-black/50 backdrop-blur-sm"
+                onClick={() => setIsOpen(false)}
+              />
 
-            <motion.div
-              initial="closed"
-              animate="open"
-              exit="closed"
-              variants={drawerVariants}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed inset-y-0 right-0 z-[70] w-full max-w-sm bg-white/90 dark:bg-surface-900/90 backdrop-blur-xl border-l border-white/20 shadow-2xl flex flex-col"
-            >
-              {/* Drawer Header */}
-              <div className="shrink-0 p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 shadow-lg shadow-brand-500/20 text-white">
-                    <Bell size={20} />
+              <motion.div
+                initial="closed"
+                animate="open"
+                exit="closed"
+                variants={drawerVariants}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="fixed inset-y-0 right-0 z-[110] w-full max-w-sm bg-white/90 dark:bg-surface-900/90 backdrop-blur-xl border-l border-white/20 shadow-2xl flex flex-col"
+              >
+                {/* Drawer Header */}
+                <div className="shrink-0 p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 shadow-lg shadow-brand-500/20 text-white">
+                      <Bell size={20} />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-display font-bold text-surface-900 dark:text-white">
+                        {activeTab === 'settings' ? 'Preferences' : 'Notifications'}
+                      </h2>
+                      <p className="text-xs font-medium text-surface-500 dark:text-surface-400">
+                        {activeTab === 'settings' ? 'Configure alerts' : `${unreadCount} unread updates`}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-display font-bold text-surface-900 dark:text-white">
-                      {activeTab === 'settings' ? 'Preferences' : 'Notifications'}
-                    </h2>
-                    <p className="text-xs font-medium text-surface-500 dark:text-surface-400">
-                      {activeTab === 'settings' ? 'Configure alerts' : `${unreadCount} unread updates`}
-                    </p>
-                  </div>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-surface-500 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-surface-500 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
 
-              {/* Tabs */}
-              <div className="shrink-0 px-6 pt-4 pb-2 flex gap-2">
-                <button
-                  onClick={() => setActiveTab('notifications')}
-                  className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'notifications'
-                    ? 'bg-surface-100 dark:bg-surface-800 text-surface-900 dark:text-white'
-                    : 'text-surface-400 hover:text-surface-600 dark:hover:text-surface-300'
-                    }`}
-                >
-                  Activity
-                </button>
-                <button
-                  onClick={() => setActiveTab('settings')}
-                  className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'settings'
-                    ? 'bg-surface-100 dark:bg-surface-800 text-surface-900 dark:text-white'
-                    : 'text-surface-400 hover:text-surface-600 dark:hover:text-surface-300'
-                    }`}
-                >
-                  Settings
-                </button>
-              </div>
+                {/* Tabs */}
+                <div className="shrink-0 px-6 pt-4 pb-2 flex gap-2">
+                  <button
+                    onClick={() => setActiveTab('notifications')}
+                    className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'notifications'
+                      ? 'bg-surface-100 dark:bg-surface-800 text-surface-900 dark:text-white'
+                      : 'text-surface-400 hover:text-surface-600 dark:hover:text-surface-300'
+                      }`}
+                  >
+                    Activity
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'settings'
+                      ? 'bg-surface-100 dark:bg-surface-800 text-surface-900 dark:text-white'
+                      : 'text-surface-400 hover:text-surface-600 dark:hover:text-surface-300'
+                      }`}
+                  >
+                    Settings
+                  </button>
+                </div>
 
-              {/* Drawer Content */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-                <AnimatePresence mode="wait">
-                  {activeTab === 'notifications' ? (
-                    <motion.div
-                      key="list"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="space-y-4"
-                    >
-                      {notifications.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                          <div className="w-16 h-16 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center mb-4">
-                            <CheckCircle size={32} className="text-brand-500 opacity-50" />
+                {/* Drawer Content */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                  <AnimatePresence mode="wait">
+                    {activeTab === 'notifications' ? (
+                      <motion.div
+                        key="list"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className="space-y-4"
+                      >
+                        {notifications.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <div className="w-16 h-16 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center mb-4">
+                              <CheckCircle size={32} className="text-brand-500 opacity-50" />
+                            </div>
+                            <h3 className="text-sm font-bold text-surface-900 dark:text-white mb-1">All Caught Up</h3>
+                            <p className="text-xs text-surface-500 max-w-[200px]">
+                              You have cleared all your notifications. Time to focus!
+                            </p>
                           </div>
-                          <h3 className="text-sm font-bold text-surface-900 dark:text-white mb-1">All Caught Up</h3>
-                          <p className="text-xs text-surface-500 max-w-[200px]">
-                            You have cleared all your notifications. Time to focus!
-                          </p>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex justify-end gap-2 mb-2">
-                            <button
-                              onClick={markAllAsRead}
-                              className="text-[10px] font-bold uppercase tracking-widest text-brand-500 hover:text-brand-600"
-                            >
-                              Read All
-                            </button>
-                            <span className="text-surface-300 dark:text-surface-700">•</span>
-                            <button
-                              onClick={clearAll}
-                              className="text-[10px] font-bold uppercase tracking-widest text-surface-400 hover:text-surface-600"
-                            >
-                              Clear
-                            </button>
-                          </div>
-
-                          <div className="space-y-3">
-                            {notifications.map((notif, i) => (
-                              <motion.div
-                                key={notif.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.05 }}
-                                onClick={() => markAsRead(notif.id)}
-                                className={`group relative p-4 rounded-2xl border transition-all cursor-pointer ${notif.read
-                                  ? 'bg-transparent border-transparent hover:bg-surface-50 dark:hover:bg-surface-800/50'
-                                  : 'bg-white dark:bg-surface-800 border-black/5 dark:border-white/5 shadow-lg shadow-black/5'
-                                  }`}
+                        ) : (
+                          <>
+                            <div className="flex justify-end gap-2 mb-2">
+                              <button
+                                onClick={markAllAsRead}
+                                className="text-[10px] font-bold uppercase tracking-widest text-brand-500 hover:text-brand-600"
                               >
-                                {!notif.read && (
-                                  <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-rose-500 shadow-sm" />
-                                )}
+                                Read All
+                              </button>
+                              <span className="text-surface-300 dark:text-surface-700">•</span>
+                              <button
+                                onClick={clearAll}
+                                className="text-[10px] font-bold uppercase tracking-widest text-surface-400 hover:text-surface-600"
+                              >
+                                Clear
+                              </button>
+                            </div>
 
-                                <div className="flex gap-4">
-                                  <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-surface-50 dark:bg-surface-900 border border-black/5 dark:border-white/5`}>
-                                    {getNotificationIcon(notif.type)}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-bold mb-1 line-clamp-2 ${notif.read ? 'text-surface-500 dark:text-surface-400' : 'text-surface-900 dark:text-white'}`}>
-                                      {notif.message || notif.taskTitle}
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[10px] font-medium text-surface-400 uppercase tracking-wide">
-                                        {formatTime(notif.timestamp)}
-                                      </span>
-                                      {notif.taskTitle && (
-                                        <>
-                                          <span className="w-1 h-1 rounded-full bg-surface-300" />
-                                          <span className="text-[10px] font-medium text-brand-500 line-clamp-1">
-                                            {notif.taskTitle}
-                                          </span>
-                                        </>
-                                      )}
+                            <div className="space-y-3">
+                              {notifications.map((notif, i) => (
+                                <motion.div
+                                  key={notif.id}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: i * 0.05 }}
+                                  onClick={() => markAsRead(notif.id)}
+                                  className={`group relative p-4 rounded-2xl border transition-all cursor-pointer ${notif.read
+                                    ? 'bg-transparent border-transparent hover:bg-surface-50 dark:hover:bg-surface-800/50'
+                                    : 'bg-white dark:bg-surface-800 border-black/5 dark:border-white/5 shadow-lg shadow-black/5'
+                                    }`}
+                                >
+                                  {!notif.read && (
+                                    <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-rose-500 shadow-sm" />
+                                  )}
+
+                                  <div className="flex gap-4">
+                                    <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-surface-50 dark:bg-surface-900 border border-black/5 dark:border-white/5`}>
+                                      {getNotificationIcon(notif.type)}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-sm font-bold mb-1 line-clamp-2 ${notif.read ? 'text-surface-500 dark:text-surface-400' : 'text-surface-900 dark:text-white'}`}>
+                                        {notif.message || notif.taskTitle}
+                                      </p>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-medium text-surface-400 uppercase tracking-wide">
+                                          {formatTime(notif.timestamp)}
+                                        </span>
+                                        {notif.taskTitle && (
+                                          <>
+                                            <span className="w-1 h-1 rounded-full bg-surface-300" />
+                                            <span className="text-[10px] font-medium text-brand-500 line-clamp-1">
+                                              {notif.taskTitle}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              </motion.div>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="settings"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                    >
-                      <NotificationSettings isDarkMode={isDarkMode} isOpen={true} inline={true} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="settings"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                      >
+                        <NotificationSettings isDarkMode={isDarkMode} isOpen={true} inline={true} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 };
