@@ -221,7 +221,7 @@ export const getAverageDuration = (tasks) => {
     const completedTasks = tasks.filter(t => t.completed && t.timeTracking?.totalTimeSpent);
 
     if (completedTasks.length === 0) {
-        return { average: 0, total: 0, count: 0 };
+        return { averageHours: 0, averageMinutes: 0, totalHours: 0, count: 0 };
     }
 
     const totalTime = completedTasks.reduce((sum, task) =>
@@ -238,6 +238,58 @@ export const getAverageDuration = (tasks) => {
     };
 };
 
+/**
+ * Get overall task completion rate
+ * @param {Array} tasks - All tasks
+ * @returns {number} - Completion rate percentage
+ */
+export const getTaskCompletionRate = (tasks) => {
+    if (!tasks || tasks.length === 0) return 0;
+    const completed = tasks.filter(t => t.completed).length;
+    return Math.round((completed / tasks.length) * 100);
+};
+
+/**
+ * Get current streak of consecutive days with completed tasks
+ * @param {Array} tasks - All tasks
+ * @returns {number} - Streak count
+ */
+export const getStreakCount = (tasks) => {
+    if (!tasks || tasks.length === 0) return 0;
+
+    // Get unique dates with completions
+    const completionDates = [...new Set(tasks
+        .filter(t => t.completed)
+        .map(t => t.date))]
+        .sort((a, b) => new Date(b) - new Date(a));
+
+    if (completionDates.length === 0) return 0;
+
+    let streak = 0;
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+    // Check if the latest completion was today or yesterday to start streak
+    if (completionDates[0] !== today && completionDates[0] !== yesterday) {
+        return 0;
+    }
+
+    let currentDate = new Date(completionDates[0]);
+    for (const dateStr of completionDates) {
+        const date = new Date(dateStr);
+        const diff = (currentDate - date) / (1000 * 60 * 60 * 24);
+
+        if (diff <= 1) {
+            streak++;
+            currentDate = date;
+        } else {
+            break;
+        }
+    }
+
+    return streak;
+};
+
 export default {
     calculateCompletionRate,
     getTimeByCategory,
@@ -246,5 +298,7 @@ export default {
     getMostProductiveHours,
     getWeeklySummary,
     getOverdueTasks,
-    getAverageDuration
+    getAverageDuration,
+    getTaskCompletionRate,
+    getStreakCount
 };

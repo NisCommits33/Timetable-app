@@ -104,30 +104,6 @@ export function useTimeTracking(tasks, setTasks) {
     );
   }, [setTasks]);
 
-  // Live timer tick
-  useEffect(() => {
-    if (!activeTimer) return;
-
-    const interval = setInterval(() => {
-      setTasks(prevTasks =>
-        prevTasks.map(task => {
-          if (task.id === activeTimer && task.timeTracking.isTracking) {
-            const sessionDuration = Date.now() - task.timeTracking.currentSessionStart;
-            const totalSoFar = task.timeTracking.totalTimeSpent + sessionDuration;
-
-            return {
-              ...task,
-              actualDuration: Math.floor(totalSoFar / 1000)
-            };
-          }
-          return task;
-        })
-      );
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [activeTimer, setTasks]);
-
   // Auto-stop timer when component unmounts
   useEffect(() => {
     return () => {
