@@ -19,7 +19,7 @@ const DayView = ({
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getTasksForDay = (day) => {
-    return tasks.filter(task => task.day === day);
+    return tasks.filter(task => task.day === day && task.type !== 'event');
   };
 
   const navigateDay = (direction) => {

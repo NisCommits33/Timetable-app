@@ -155,6 +155,9 @@ export const migrateTasks = (tasks) => {
         const migratedTask = {
             ...task,
 
+            // Add type if missing (default to 'task')
+            type: task.type || 'task',
+
             // Add time tracking if missing
             timeTracking: task.timeTracking || {
                 isTracking: false,

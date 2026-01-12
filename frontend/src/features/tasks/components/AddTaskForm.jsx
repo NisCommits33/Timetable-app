@@ -16,7 +16,9 @@ import {
   Hash,
   Sparkles,
   Layout,
-  MessageSquare
+  MessageSquare,
+  Zap,
+  Coffee
 } from "lucide-react";
 
 /**
@@ -36,10 +38,12 @@ const InputField = ({ label, icon: Icon, children, className = "" }) => (
 
 function AddTaskForm({ onAddTask, isDarkMode }) {
   // Form state
+  const [type, setType] = useState("task"); // 'task' or 'event'
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [day, setDay] = useState("Monday");
   const [priority, setPriority] = useState("medium");
   const [location, setLocation] = useState("");
@@ -53,7 +57,7 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
   const [isTimeExpanded, setIsTimeExpanded] = useState(false);
   const [isPriorityExpanded, setIsPriorityExpanded] = useState(false);
   const [isTagSuggestionsOpen, setIsTagSuggestionsOpen] = useState(false);
-  const [suggestedTags] = useState(["work", "personal", "health", "urgent", "meeting", "study"]);
+  const [suggestedTags] = useState(["work", "personal", "health", "urgent", "meeting", "study", "exam", "interview"]);
 
   // Refs for outside click handling
   const timeDropdownRef = useRef(null);
@@ -92,20 +96,21 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
 
     const newTask = {
       id: Date.now(),
+      type, // 'task' or 'event'
       title: title.trim(),
       description,
       startTime,
       endTime,
-      date: new Date().toISOString().split("T")[0],
-      day,
-      priority,
+      date: type === 'event' ? date : new Date().toISOString().split("T")[0],
+      day: type === 'event' ? new Date(date).toLocaleDateString('en-US', { weekday: 'long' }) : day,
+      priority: type === 'event' ? null : priority, // Events don't strictly need priority, or could be implicit high
       location,
       notes,
       tags,
       category,
       completed: false,
       timeTracking: { isTracking: false, totalTimeSpent: 0, currentSessionStart: null, sessions: [] },
-      estimatedDuration: calculateEstimatedDuration(startTime, endTime),
+      estimatedDuration: type === 'event' ? 0 : calculateEstimatedDuration(startTime, endTime),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -115,6 +120,7 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
   };
 
   const resetForm = () => {
+    setType("task");
     setTitle("");
     setDescription("");
     setLocation("");
@@ -149,26 +155,54 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
 
   return (
     <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
+
+      {/* Type Toggle */}
+      <div className="flex bg-surface-100 dark:bg-surface-800 p-1.5 rounded-2xl border border-black/5 dark:border-white/5">
+        <button
+          type="button"
+          onClick={() => setType("task")}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${type === "task"
+            ? "bg-white dark:bg-surface-700 text-brand-600 dark:text-white shadow-md"
+            : "text-surface-400 hover:text-surface-600"
+            }`}
+        >
+          <Zap size={16} className={type === "task" ? "text-brand-500" : "opacity-50"} />
+          Task
+        </button>
+        <button
+          type="button"
+          onClick={() => setType("event")}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${type === "event"
+            ? "bg-white dark:bg-surface-700 text-purple-600 dark:text-purple-300 shadow-md"
+            : "text-surface-400 hover:text-surface-600"
+            }`}
+        >
+          <Coffee size={16} className={type === "event" ? "text-purple-500" : "opacity-50"} />
+          Event
+        </button>
+      </div>
+
       {/* Primary Info */}
       <div className="space-y-6">
-        <InputField label="Objective Title" icon={Sparkles}>
+        <InputField label={type === 'event' ? "Event Name" : "Objective Title"} icon={type === 'event' ? Calendar : Sparkles}>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-800 border-2 border-transparent focus:border-brand-500/30 dark:focus:border-brand-500/30 text-lg font-display font-bold text-surface-900 dark:text-white placeholder-surface-300 dark:placeholder-surface-600 shadow-sm transition-all outline-none"
-            placeholder="What's the main mission?"
+            placeholder={type === 'event' ? "e.g., Final Interview, Calculus Exam" : "What's the main mission?"}
             required
+            autoFocus
           />
         </InputField>
 
-        <InputField label="Detailed Intelligence" icon={MessageSquare}>
+        <InputField label="Additional Details" icon={MessageSquare}>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-800 border-2 border-transparent focus:border-brand-500/30 dark:focus:border-brand-500/30 text-sm font-medium text-surface-700 dark:text-surface-300 placeholder-surface-300 dark:placeholder-surface-600 shadow-sm transition-all outline-none resize-none"
-            placeholder="Add context, goals, or notes..."
+            placeholder="Add context, location notes, or agenda..."
           />
         </InputField>
       </div>
@@ -178,7 +212,7 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
       {/* Scheduling Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <InputField label="Temporal Window" icon={Clock}>
+          <InputField label="Time Window" icon={Clock}>
             <div className="grid grid-cols-2 gap-3">
               <div className="relative">
                 <input
@@ -187,9 +221,6 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
                   onChange={(e) => setStartTime(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-white dark:bg-surface-800 border border-black/5 dark:border-white/5 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
                 />
-                <div className="absolute top-0 right-0 p-1 opacity-20 pointer-events-none">
-                  <ChevronDown size={10} />
-                </div>
               </div>
               <div className="relative">
                 <input
@@ -202,48 +233,59 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
             </div>
           </InputField>
 
-          <InputField label="Designated Day" icon={Calendar}>
-            <select
-              value={day}
-              onChange={(e) => setDay(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white dark:bg-surface-800 border border-black/5 dark:border-white/5 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-brand-500/20 transition-all appearance-none cursor-pointer"
-            >
-              {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(d => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
+          <InputField label={type === 'event' ? "Event Date" : "Designated Day"} icon={Calendar}>
+            {type === 'event' ? (
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-surface-800 border border-black/5 dark:border-white/5 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-brand-500/20 transition-all cursor-pointer"
+              />
+            ) : (
+              <select
+                value={day}
+                onChange={(e) => setDay(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-surface-800 border border-black/5 dark:border-white/5 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-brand-500/20 transition-all appearance-none cursor-pointer"
+              >
+                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            )}
           </InputField>
         </div>
 
         <div className="space-y-6">
-          <InputField label="Priority Tier" icon={AlertCircle}>
-            <div className="flex gap-2" ref={priorityDropdownRef}>
-              {priorityOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setPriority(opt.value)}
-                  className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === opt.value
-                    ? `${opt.bg} ${opt.color} ${opt.border} shadow-lg`
-                    : 'bg-surface-50 dark:bg-surface-800 text-surface-400 border-transparent hover:border-black/5 dark:hover:border-white/10'
-                    }`}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${priority === opt.value ? opt.dot : 'bg-surface-300 dark:bg-surface-600'}`} />
-                    {opt.value}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </InputField>
+          {type === 'task' && (
+            <InputField label="Priority Tier" icon={AlertCircle}>
+              <div className="flex gap-2" ref={priorityDropdownRef}>
+                {priorityOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setPriority(opt.value)}
+                    className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === opt.value
+                      ? `${opt.bg} ${opt.color} ${opt.border} shadow-lg`
+                      : 'bg-surface-50 dark:bg-surface-800 text-surface-400 border-transparent hover:border-black/5 dark:hover:border-white/10'
+                      }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${priority === opt.value ? opt.dot : 'bg-surface-300 dark:bg-surface-600'}`} />
+                      {opt.value}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </InputField>
+          )}
 
-          <InputField label="Deployment Zone" icon={MapPin}>
+          <InputField label={type === 'event' ? "Event Location" : "Deployment Zone"} icon={MapPin}>
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-white dark:bg-surface-800 border border-black/5 dark:border-white/5 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-brand-500/20 transition-all placeholder-surface-400"
-              placeholder="Where will this occur?"
+              placeholder={type === 'event' ? "Room 304, Zoom Link, etc." : "Where will this occur?"}
             />
           </InputField>
         </div>
@@ -253,7 +295,7 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
 
       {/* Metadata & Categories */}
       <div className="space-y-6">
-        <InputField label="Operational Category" icon={Layout}>
+        <InputField label="Category" icon={Layout}>
           <div className="flex flex-wrap gap-3">
             {categories.map((cat) => (
               <button
@@ -272,7 +314,7 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
           </div>
         </InputField>
 
-        <InputField label="Classification Tags" icon={Hash}>
+        <InputField label="Tags" icon={Hash}>
           <div className="p-2 rounded-2xl bg-surface-50 dark:bg-surface-800 border border-black/5 dark:border-white/5 flex flex-wrap gap-2">
             <AnimatePresence>
               {tags.map((tag) => (
@@ -330,8 +372,8 @@ function AddTaskForm({ onAddTask, isDarkMode }) {
           type="submit"
           className="premium-button flex items-center gap-3 px-10 py-5 shadow-2xl shadow-brand-500/30"
         >
-          <Plus size={20} className="stroke-[3]" />
-          <span className="font-display font-black uppercase tracking-widest">Deploy Objective</span>
+          {type === 'event' ? <Calendar size={20} className="stroke-[3]" /> : <Plus size={20} className="stroke-[3]" />}
+          <span className="font-display font-black uppercase tracking-widest">{type === 'event' ? "Schedule Event" : "Deploy Objective"}</span>
         </motion.button>
       </div>
     </form>

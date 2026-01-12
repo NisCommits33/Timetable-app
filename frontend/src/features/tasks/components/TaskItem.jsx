@@ -42,6 +42,8 @@ const TaskItem = ({
   const [manualTimeInput, setManualTimeInput] = useState("15");
   const [currentTime, setCurrentTime] = useState(Date.now());
 
+  const isEvent = task.type === 'event';
+
   useEffect(() => {
     let interval;
     if (task.timeTracking?.isTracking) {
@@ -96,6 +98,8 @@ const TaskItem = ({
 
   const handleCompletionToggle = (e) => {
     e.stopPropagation();
+    if (isEvent) return; // Events cannot be toggled
+
     if (task.completed) {
       onToggleCompletion?.(task.id);
     } else {
@@ -122,13 +126,18 @@ const TaskItem = ({
             <div className="flex items-center gap-3 mb-2">
               <button
                 onClick={handleCompletionToggle}
-                className={`flex-shrink-0 transition-all duration-300 transform hover:scale-110 ${task.completed
+                disabled={isEvent}
+                className={`flex-shrink-0 transition-all duration-300 transform ${!isEvent && 'hover:scale-110'} ${task.completed
                   ? 'text-emerald-500 dark:text-emerald-400'
-                  : 'text-surface-300 dark:text-surface-600 hover:text-brand-500'
+                  : isEvent
+                    ? 'text-purple-500 dark:text-purple-400 cursor-default'
+                    : 'text-surface-300 dark:text-surface-600 hover:text-brand-500'
                   }`}
               >
                 {task.completed ? (
                   <CheckCircle2 size={18} fill="currentColor" fillOpacity={0.2} />
+                ) : isEvent ? (
+                  <Calendar size={18} className="text-purple-500" />
                 ) : (
                   <Circle size={18} />
                 )}
@@ -163,6 +172,14 @@ const TaskItem = ({
                 </div>
               )}
             </div>
+
+            {/* Event Badge */}
+            {isEvent && (
+              <div className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-purple-500/10 text-purple-600 border-purple-500/20">
+                Event
+              </div>
+            )}
+
 
             <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-[10px] font-bold text-surface-500 dark:text-surface-400 tracking-tight">
               <div className="flex items-center gap-1.5">
@@ -239,11 +256,20 @@ const TaskItem = ({
               className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest transition-colors ${showTimerSection ? 'text-brand-500' : 'text-surface-400 hover:text-brand-500'}`}
             >
               <Clock size={12} />
-              Timer
+              {isExpanded ? 'Less' : 'More'}
             </button>
+            {!isEvent && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowTimerSection(!showTimerSection); }}
+                className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest transition-colors ${showTimerSection ? 'text-brand-500' : 'text-surface-400 hover:text-brand-500'}`}
+              >
+                <Clock size={12} />
+                Timer
+              </button>
+            )}
           </div>
 
-          {progressPercent > 0 && (
+          {progressPercent > 0 && !isEvent && (
             <div className="flex items-center gap-3">
               <div className="w-20 h-1.5 rounded-full bg-surface-100 dark:bg-surface-800 overflow-hidden">
                 <motion.div
@@ -310,7 +336,7 @@ const TaskItem = ({
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </motion.div >
   );
 };
 
