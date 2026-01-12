@@ -22,6 +22,7 @@ const ListView = ({
   const filteredTasks = useMemo(() => {
     return tasks
       .filter(task => {
+        if (task.type === 'event') return false; // Exclude events
         const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           task.description?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = filter === 'all' ||

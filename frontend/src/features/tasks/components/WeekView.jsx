@@ -119,7 +119,7 @@ export default function WeekView({
         }`}>
         {orderedDays.map((dayName, index) => {
           const isToday = dayName === days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
-          const tasksForToday = tasks.filter(task => task.day === dayName);
+          const tasksForToday = tasks.filter(task => task.day === dayName && task.type !== 'event');
           const isSelected = dayName === selectedDay;
 
           return (
