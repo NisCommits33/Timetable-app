@@ -18,11 +18,13 @@ import Snackbar from "./components/ui/Snackbar";
 // Providers
 import { NotificationProvider } from "./providers/NotificationProvider";
 import { SnackbarProvider, useSnackbar } from "./providers/SnackbarProvider";
+import { AuthProvider, useAuth } from "./providers/AuthProvider";
 
 // Custom Hooks
 import { useTimeTracking } from "./features/timer/hooks/useTimeTracking";
 import { useTasks } from "./features/tasks/hooks/useTasks";
 import { useModals } from "./features/tasks/hooks/useModals";
+import LoginPage from "./pages/LoginPage";
 
 // Initial sample tasks
 const initialTasks = [
@@ -87,6 +89,7 @@ const initialTasks = [
 function AppContent() {
   const {
     tasks,
+    loading: tasksLoading,
     setTasks,
     addTask,
     updateTask,
@@ -121,6 +124,7 @@ function AppContent() {
   } = useTimeTracking(tasks, setTasks);
 
   const { success, error, warning, info } = useSnackbar();
+  const { user, loading: authLoading, signOut } = useAuth();
 
   // Local state
   const [selectedDay, setSelectedDay] = useState(null);
@@ -134,6 +138,15 @@ function AppContent() {
     setIsDarkMode(prefersDark);
     document.documentElement.classList.toggle("dark", prefersDark);
   }, []);
+
+  if (authLoading || (user && tasksLoading)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900 transition-colors">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400 font-medium">Synchronizing your timetable...</p>
+      </div>
+    );
+  }
 
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
@@ -194,43 +207,54 @@ function AppContent() {
         toggleDarkMode={toggleDarkMode}
         showFocusTimer={showFocusTimer}
         setShowFocusTimer={setShowFocusTimer}
+        onSignOut={signOut}
       >
         <div className="min-h-[calc(100vh-200px)]">
           {/* Main Content Area - Full width now that sidebar is gone */}
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login" element={<LoginPage />} />
+
+            <Route path="/" element={
+              user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+            } />
 
             {/* Dashboard is now Analytics overview */}
             <Route path="/dashboard" element={
-              <DashboardPage
-                tasks={tasks}
-                isDarkMode={isDarkMode}
-                onAddTaskClick={() => openAddTaskModal()}
-              />
+              user ? (
+                <DashboardPage
+                  tasks={tasks}
+                  isDarkMode={isDarkMode}
+                  onAddTaskClick={() => openAddTaskModal()}
+                />
+              ) : <Navigate to="/login" replace />
             } />
 
-            <Route path="/habits" element={<HabitsPage isDarkMode={isDarkMode} />} />
+            <Route path="/habits" element={
+              user ? <HabitsPage isDarkMode={isDarkMode} /> : <Navigate to="/login" replace />
+            } />
 
             {/* Schedule hosts the task views */}
             <Route path="/schedule/*" element={
-              <SchedulePage
-                tasks={tasks}
-                isDarkMode={isDarkMode}
-                selectedDay={selectedDay}
-                setSelectedDay={setSelectedDay}
-                handleDeleteTask={handleDeleteTask}
-                handleEditTask={handleEditTask}
-                openDetailModal={openDetailModal}
-                handleTaskMove={handleTaskMove}
-                toggleTracking={toggleTracking}
-                addManualTime={addManualTime}
-                resetTracking={resetTracking}
-                quickToggleCompletion={quickToggleCompletion}
-                onOpenCompletionModal={openCompletionModal}
-                setFocusTask={setFocusTask}
-                setShowFocusTimer={setShowFocusTimer}
-                onAddTaskClick={() => openAddTaskModal()}
-              />
+              user ? (
+                <SchedulePage
+                  tasks={tasks}
+                  isDarkMode={isDarkMode}
+                  selectedDay={selectedDay}
+                  setSelectedDay={setSelectedDay}
+                  handleDeleteTask={handleDeleteTask}
+                  handleEditTask={handleEditTask}
+                  openDetailModal={openDetailModal}
+                  handleTaskMove={handleTaskMove}
+                  toggleTracking={toggleTracking}
+                  addManualTime={addManualTime}
+                  resetTracking={resetTracking}
+                  quickToggleCompletion={quickToggleCompletion}
+                  onOpenCompletionModal={openCompletionModal}
+                  setFocusTask={setFocusTask}
+                  setShowFocusTimer={setShowFocusTimer}
+                  onAddTaskClick={() => openAddTaskModal()}
+                />
+              ) : <Navigate to="/login" replace />
             } />
 
             <Route path="/features" element={<FeaturesPage isDarkMode={isDarkMode} />} />
@@ -285,7 +309,9 @@ function AppContent() {
 function App() {
   return (
     <SnackbarProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </SnackbarProvider>
   );
 }
