@@ -5,8 +5,17 @@ import { useHabits } from '../hooks/useHabits';
 import AddHabitModal from './AddHabitModal';
 
 const HabitTracker = ({ isDarkMode }) => {
-    const { habits, addHabit, toggleHabit, deleteHabit } = useHabits();
+    const { habits, loading, addHabit, toggleHabit, deleteHabit } = useHabits();
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 space-y-4">
+                <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-surface-500 font-medium">Loading rituals...</p>
+            </div>
+        );
+    }
 
     // Get last 7 days for the weekly view
     const getLast7Days = () => {
@@ -83,9 +92,9 @@ const HabitTracker = ({ isDarkMode }) => {
                                         )}
                                     </div>
                                     <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${habit.category === 'health' ? 'bg-emerald-500/10 text-emerald-600' :
-                                            habit.category === 'learning' ? 'bg-blue-500/10 text-blue-600' :
-                                                habit.category === 'mindfulness' ? 'bg-amber-500/10 text-amber-600' :
-                                                    'bg-purple-500/10 text-purple-600'
+                                        habit.category === 'learning' ? 'bg-blue-500/10 text-blue-600' :
+                                            habit.category === 'mindfulness' ? 'bg-amber-500/10 text-amber-600' :
+                                                'bg-purple-500/10 text-purple-600'
                                         }`}>
                                         {habit.category}
                                     </span>
@@ -115,8 +124,8 @@ const HabitTracker = ({ isDarkMode }) => {
                                                 whileTap={{ scale: 0.8 }}
                                                 onClick={() => toggleHabit(habit.id, dStr)}
                                                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isCompleted
-                                                        ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/30'
-                                                        : 'bg-surface-100 dark:bg-surface-700 text-transparent hover:bg-surface-200 dark:hover:bg-surface-600'
+                                                    ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/30'
+                                                    : 'bg-surface-100 dark:bg-surface-700 text-transparent hover:bg-surface-200 dark:hover:bg-surface-600'
                                                     }`}
                                             >
                                                 <Check size={14} strokeWidth={4} />
