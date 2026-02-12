@@ -37,7 +37,7 @@ export const useTasks = (initialTasks = []) => {
                     if (error) throw error;
 
                     if (data && data.length > 0) {
-                        setTasks(migrateTasks(data));
+                        setTasks(data.map(mapFromSupabase));
                     } else {
                         // If user has no tasks in cloud, check local storage for migration
                         const localStored = getItem(STORAGE_KEY);
@@ -45,7 +45,7 @@ export const useTasks = (initialTasks = []) => {
                             const migrated = migrateTasks(localStored);
                             // Push local tasks to cloud
                             const tasksToPush = migrated.map(t => ({
-                                ...t,
+                                ...mapToSupabase(t),
                                 user_id: user.id,
                                 id: typeof t.id === 'string' && t.id.includes('-') ? t.id : crypto.randomUUID()
                             }));
@@ -55,7 +55,7 @@ export const useTasks = (initialTasks = []) => {
                                 .insert(tasksToPush);
 
                             if (pushError) console.error('Migration error:', pushError);
-                            setTasks(tasksToPush);
+                            setTasks(tasksToPush.map(mapFromSupabase));
                         } else {
                             setTasks(initialTasks);
                         }
@@ -80,31 +80,78 @@ export const useTasks = (initialTasks = []) => {
     useEffect(() => {
         if (!user) return;
 
-        const channel = supabase
-            .channel(`tasks_user_${user.id}`)
-            .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'tasks',
-                filter: `user_id=eq.${user.id}`
-            }, (payload) => {
-                if (payload.eventType === 'INSERT') {
-                    setTasks(prev => {
-                        if (prev.find(t => t.id === payload.new.id)) return prev;
-                        return [...prev, payload.new];
-                    });
-                } else if (payload.eventType === 'UPDATE') {
-                    setTasks(prev => prev.map(t => t.id === payload.new.id ? payload.new : t));
-                } else if (payload.eventType === 'DELETE') {
-                    setTasks(prev => prev.filter(t => t.id !== payload.old.id));
-                }
-            })
-            .subscribe();
+        let channel = null;
+
+        const setupSubscription = () => {
+            channel = supabase
+                .channel(`tasks_user_${user.id}`)
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'tasks',
+                    filter: `user_id=eq.${user.id}`
+                }, (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        setTasks(prev => {
+                            const newTask = mapFromSupabase(payload.new);
+                            if (prev.find(t => t.id === newTask.id)) return prev;
+                            return [...prev, newTask];
+                        });
+                    } else if (payload.eventType === 'UPDATE') {
+                        setTasks(prev => prev.map(t => t.id === payload.new.id ? mapFromSupabase(payload.new) : t));
+                    } else if (payload.eventType === 'DELETE') {
+                        setTasks(prev => prev.filter(t => t.id !== payload.old.id));
+                    }
+                })
+                .subscribe();
+        };
+
+        setupSubscription();
 
         return () => {
-            supabase.removeChannel(channel);
+            if (channel) {
+                supabase.removeChannel(channel);
+            }
         };
     }, [user]);
+
+    // Helper to map Supabase snake_case to frontend camelCase
+    const mapFromSupabase = (t) => ({
+        ...t,
+        startTime: t.start_time,
+        endTime: t.end_time,
+        timeTracking: t.time_tracking,
+        estimatedDuration: t.estimated_duration,
+        actualDuration: t.actual_duration,
+        createdAt: t.created_at,
+        updatedAt: t.updated_at,
+        completedAt: t.completed_at
+    });
+
+    // Helper to map frontend camelCase to Supabase snake_case
+    const mapToSupabase = (t) => {
+        const mapped = {
+            ...t,
+            start_time: t.startTime,
+            end_time: t.endTime,
+            time_tracking: t.timeTracking,
+            estimated_duration: t.estimatedDuration,
+            actual_duration: t.actualDuration,
+            created_at: t.createdAt,
+            updated_at: t.updatedAt,
+            completed_at: t.completedAt
+        };
+        // Remove camelCase versions to keep payload clean
+        delete mapped.startTime;
+        delete mapped.endTime;
+        delete mapped.timeTracking;
+        delete mapped.estimatedDuration;
+        delete mapped.actualDuration;
+        delete mapped.createdAt;
+        delete mapped.updatedAt;
+        delete mapped.completedAt;
+        return mapped;
+    };
 
     // Persist to localStorage as secondary backup/offline cache
     useEffect(() => {
@@ -112,7 +159,7 @@ export const useTasks = (initialTasks = []) => {
             isFirstRender.current = false;
             return;
         }
-        if (tasks.length > 0) {
+        if (tasks && tasks.length > 0) {
             setItem(STORAGE_KEY, tasks);
         }
     }, [tasks]);
@@ -141,17 +188,17 @@ export const useTasks = (initialTasks = []) => {
 
         if (user) {
             try {
+                const supabaseTask = { ...mapToSupabase(taskToAdd), user_id: user.id };
                 const { data, error } = await supabase
                     .from('tasks')
-                    .insert([{ ...taskToAdd, user_id: user.id }])
+                    .insert([supabaseTask])
                     .select()
                     .single();
 
                 if (error) throw error;
-                // Realtime will handle local state update if we want, 
-                // but usually optimistic update is better UX:
-                setTasks(prev => [...prev, data]);
-                return { success: true, error: null, task: data };
+                const finalTask = mapFromSupabase(data);
+                setTasks(prev => [...prev, finalTask]);
+                return { success: true, error: null, task: finalTask };
             } catch (err) {
                 console.error('Supabase addTask error:', err);
                 return { success: false, error: err.message, task: null };
@@ -188,15 +235,17 @@ export const useTasks = (initialTasks = []) => {
 
         if (user) {
             try {
+                const supabaseUpdates = mapToSupabase(updatedTask);
                 const { data, error } = await supabase
                     .from('tasks')
-                    .update(updatedTask)
+                    .update(supabaseUpdates)
                     .eq('id', taskId)
                     .select()
                     .single();
 
                 if (error) throw error;
-                setTasks(prev => prev.map(t => t.id === taskId ? data : t));
+                const finalTask = mapFromSupabase(data);
+                setTasks(prev => prev.map(t => t.id === taskId ? finalTask : t));
                 return { success: true, error: null };
             } catch (err) {
                 console.error('Supabase updateTask error:', err);
@@ -313,13 +362,15 @@ export const useTasks = (initialTasks = []) => {
         if (user) {
             try {
                 const sanitized = sanitizeTaskInput(updates);
+                const supabaseUpdates = mapToSupabase({ ...sanitized, updatedAt: new Date().toISOString() });
                 const { error } = await supabase
                     .from('tasks')
-                    .update({ ...sanitized, updatedAt: new Date().toISOString() })
+                    .update(supabaseUpdates)
                     .in('id', taskIds);
 
                 if (error) throw error;
-                setTasks(prev => prev.map(t => taskIds.includes(t.id) ? { ...t, ...sanitized } : t));
+                // Update local state with sanitized (camelCase) updates
+                setTasks(prev => prev.map(t => taskIds.includes(t.id) ? { ...t, ...sanitized, updatedAt: new Date().toISOString() } : t));
             } catch (err) {
                 console.error('Supabase bulkUpdate error:', err);
             }

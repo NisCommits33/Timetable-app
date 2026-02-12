@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
@@ -45,17 +45,28 @@ export default function WeekView({
 
   const [activeTask, setActiveTask] = useState(null);
   const [columnConfig, setColumnConfig] = useState('adaptive'); // 'adaptive', '3', '5', '7'
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Handle window resize to detect mobile
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Disable DnD on mobile to prevent interference with scrolling
+  const activeSensors = isMobile ? [] : sensors;
 
   const handleDragStart = (event) => {
     const { active } = event;
@@ -86,7 +97,7 @@ export default function WeekView({
 
   return (
     <DndContext
-      sensors={sensors}
+      sensors={activeSensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}

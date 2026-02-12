@@ -23,8 +23,17 @@ export const AuthProvider = ({ children }) => {
         });
 
         // Listen for changes on auth state (logged in, signed out, etc.)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'TOKEN_REFRESHED') {
+                console.log('Token refreshed successfully');
+            }
+
+            if (event === 'SIGNED_OUT' || !session) {
+                // Clear any local storage if needed, though supabase handles most
+                setUser(null);
+            } else {
+                setUser(session.user);
+            }
             setLoading(false);
         });
 
@@ -41,6 +50,14 @@ export const AuthProvider = ({ children }) => {
             }
         }),
         signOut: () => supabase.auth.signOut(),
+        updateProfile: async (updates) => {
+            const { data, error } = await supabase.auth.updateUser({
+                data: updates
+            });
+            if (error) throw error;
+            setUser(data.user);
+            return data;
+        },
         user,
         loading,
     };

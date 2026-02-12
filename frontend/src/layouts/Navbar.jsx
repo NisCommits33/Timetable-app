@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Sun, Moon, Target, LayoutDashboard, Sparkles, Clock, Flame, LogOut } from 'lucide-react';
+import { Calendar, Sun, Moon, Target, LayoutDashboard, Sparkles, Clock, Flame, LogOut, User } from 'lucide-react';
 import NotificationCenter from '../features/notifications/components/NotificationCenter';
 
 const Navbar = ({ isDarkMode, toggleDarkMode, showFocusTimer, setShowFocusTimer, onSignOut }) => {
@@ -100,15 +100,19 @@ const Navbar = ({ isDarkMode, toggleDarkMode, showFocusTimer, setShowFocusTimer,
                         {onSignOut && (
                             <>
                                 <div className="h-4 w-px bg-surface-200 dark:bg-surface-700 mx-1" />
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={onSignOut}
-                                    className="p-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border border-transparent dark:border-red-900/30 transition-all duration-300"
-                                    title="Sign Out"
+                                <NavLink
+                                    to="/profile"
+                                    className={({ isActive }) => `
+                                        p-2.5 rounded-xl transition-all duration-300
+                                        ${isActive
+                                            ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
+                                            : 'bg-surface-100 dark:bg-surface-800 text-surface-500 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700 hover:text-surface-900 dark:hover:text-white'
+                                        } border border-transparent dark:border-surface-700
+                                    `}
+                                    title="My Profile"
                                 >
-                                    <LogOut className="h-5 w-5" />
-                                </motion.button>
+                                    <User className="h-5 w-5" />
+                                </NavLink>
                             </>
                         )}
                     </div>

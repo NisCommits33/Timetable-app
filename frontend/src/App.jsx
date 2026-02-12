@@ -25,6 +25,7 @@ import { useTimeTracking } from "./features/timer/hooks/useTimeTracking";
 import { useTasks } from "./features/tasks/hooks/useTasks";
 import { useModals } from "./features/tasks/hooks/useModals";
 import LoginPage from "./pages/LoginPage";
+import ProfilePage from "./pages/ProfilePage";
 
 // Initial sample tasks
 const initialTasks = [
@@ -258,6 +259,9 @@ function AppContent() {
             } />
 
             <Route path="/features" element={<FeaturesPage isDarkMode={isDarkMode} />} />
+            <Route path="/profile" element={
+              user ? <ProfilePage /> : <Navigate to="/login" replace />
+            } />
 
             {/* Legacy or Direct Path Support */}
             <Route path="/week" element={<Navigate to="/schedule/week" replace />} />

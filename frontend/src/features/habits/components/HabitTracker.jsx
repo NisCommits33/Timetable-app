@@ -64,34 +64,33 @@ const HabitTracker = ({ isDarkMode }) => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                <AnimatePresence>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                <AnimatePresence initial={false}>
                     {habits.map((habit) => (
                         <motion.div
                             key={habit.id}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            layout
-                            className={`group relative p-5 rounded-2xl border transition-all ${habit.history[todayStr]
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className={`group relative p-4 md:p-5 rounded-2xl border transition-all ${habit.history[todayStr]
                                 ? 'bg-brand-500/5 border-brand-500/20'
                                 : 'bg-white dark:bg-surface-800 border-black/5 dark:border-white/5 hover:border-brand-500/30'
                                 }`}
                         >
                             <div className="flex justify-between items-start mb-4">
-                                <div>
+                                <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h3 className={`font-display font-bold text-lg ${habit.history[todayStr] ? 'text-brand-600 dark:text-brand-400' : 'text-surface-900 dark:text-white'}`}>
+                                        <h3 className={`font-display font-bold text-base md:text-lg truncate ${habit.history[todayStr] ? 'text-brand-600 dark:text-brand-400' : 'text-surface-900 dark:text-white'}`}>
                                             {habit.title}
                                         </h3>
                                         {habit.streak > 2 && (
-                                            <div className="flex items-center text-xs font-black text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded-md animate-pulse">
+                                            <div className="flex-shrink-0 flex items-center text-[10px] font-black text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded-md">
                                                 <Flame size={10} className="mr-0.5 fill-current" />
                                                 {habit.streak}
                                             </div>
                                         )}
                                     </div>
-                                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${habit.category === 'health' ? 'bg-emerald-500/10 text-emerald-600' :
+                                    <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 md:py-1 rounded-lg ${habit.category === 'health' ? 'bg-emerald-500/10 text-emerald-600' :
                                         habit.category === 'learning' ? 'bg-blue-500/10 text-blue-600' :
                                             habit.category === 'mindfulness' ? 'bg-amber-500/10 text-amber-600' :
                                                 'bg-purple-500/10 text-purple-600'
@@ -102,33 +101,33 @@ const HabitTracker = ({ isDarkMode }) => {
 
                                 <button
                                     onClick={() => deleteHabit(habit.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-2 rounded-lg text-rose-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all"
+                                    className="md:opacity-0 group-hover:opacity-100 p-2 rounded-lg text-rose-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all"
                                 >
                                     <Trash2 size={16} />
                                 </button>
                             </div>
 
-                            {/* Weekly Grid */}
-                            <div className="flex justify-between items-center gap-2 mt-4">
+                            {/* Weekly Grid - Better Mobile Handling */}
+                            <div className="flex justify-between md:justify-around items-center gap-1 mt-4 overflow-x-auto pb-1 hide-scrollbar">
                                 {weekDays.map((date, i) => {
                                     const dStr = date.toISOString().split('T')[0];
                                     const isToday = dStr === todayStr;
                                     const isCompleted = habit.history[dStr];
 
                                     return (
-                                        <div key={i} className="flex flex-col items-center gap-1.5">
-                                            <span className={`text-[10px] font-bold ${isToday ? 'text-brand-500' : 'text-surface-400'}`}>
+                                        <div key={i} className="flex flex-col items-center gap-1 flex-shrink-0 min-w-[32px]">
+                                            <span className={`text-[9px] font-bold ${isToday ? 'text-brand-500' : 'text-surface-400'}`}>
                                                 {getDayLabel(date)}
                                             </span>
                                             <motion.button
-                                                whileTap={{ scale: 0.8 }}
+                                                whileTap={{ scale: 0.9 }}
                                                 onClick={() => toggleHabit(habit.id, dStr)}
-                                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isCompleted
+                                                className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-all ${isCompleted
                                                     ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/30'
                                                     : 'bg-surface-100 dark:bg-surface-700 text-transparent hover:bg-surface-200 dark:hover:bg-surface-600'
                                                     }`}
                                             >
-                                                <Check size={14} strokeWidth={4} />
+                                                <Check size={12} strokeWidth={4} />
                                             </motion.button>
                                         </div>
                                     );
@@ -137,18 +136,14 @@ const HabitTracker = ({ isDarkMode }) => {
 
                             {/* Today's Toggle (Large) */}
                             {!habit.history[todayStr] && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="mt-6"
-                                >
+                                <div className="mt-5 md:mt-6">
                                     <button
                                         onClick={() => toggleHabit(habit.id, todayStr)}
-                                        className="w-full py-3 rounded-xl bg-surface-900 dark:bg-white text-white dark:text-surface-900 font-bold text-sm tracking-wide shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                        className="w-full py-2.5 md:py-3 rounded-xl bg-surface-900 dark:bg-white text-white dark:text-surface-900 font-bold text-xs md:text-sm tracking-wide shadow-xl active:scale-[0.98] transition-all"
                                     >
-                                        Mark Complete
+                                        Mark Today Done
                                     </button>
-                                </motion.div>
+                                </div>
                             )}
                         </motion.div>
                     ))}
